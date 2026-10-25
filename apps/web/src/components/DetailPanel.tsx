@@ -2,6 +2,7 @@ import {
   QUICK_EFFECTS,
   STANDARD_CONDITIONS,
   rollDie,
+  signed,
   type AbilityKey,
   type CombatEventBody,
   type Combatant,
@@ -137,6 +138,7 @@ function PcSheet({ snap, now }: { snap: PcSnapshot; now: number }) {
         HP <strong>{snap.hp.current}</strong>/{snap.hp.max}
         {snap.hp.temp > 0 && <span className="temp"> +{snap.hp.temp} temp</span>} · Level {snap.level}
       </div>
+      {snap.stats && <PcStatsView stats={snap.stats} />}
       {snap.hp.current === 0 && (
         <div>
           Death saves: ✓ {snap.deathSaves.success} · ✗ {snap.deathSaves.fail} {snap.deathSaves.stable && '(stable)'}
@@ -172,6 +174,47 @@ function PcSheet({ snap, now }: { snap: PcSnapshot; now: number }) {
         </div>
       )}
     </div>
+  );
+}
+
+function PcStatsView({ stats }: { stats: NonNullable<PcSnapshot['stats']> }) {
+  const defenses = [
+    ['Resist', stats.resistances],
+    ['Immune', stats.immunities],
+    ['Vulnerable', stats.vulnerabilities],
+  ] as const;
+  return (
+    <>
+      <div className="muted">
+        {stats.race} {stats.classes}
+        {stats.inspiration && <span className="chip">Inspiration</span>}
+      </div>
+      <div className="row" style={{ gap: 4, flexWrap: 'wrap' }}>
+        <span className="chip">AC {stats.ac}</span>
+        <span className="chip">Init {signed(stats.initBonus)}</span>
+        <span className="chip" title="Passive Perception / Insight / Investigation">
+          Passive {stats.passive.perception} / {stats.passive.insight} / {stats.passive.investigation}
+        </span>
+        {stats.spellcasting.map((s) => (
+          <span key={s.sources.join()} className="chip" title={s.sources.join(', ')}>
+            Spell DC {s.dc}
+            {s.attack !== null && ` · ${signed(s.attack)} hit`}
+          </span>
+        ))}
+      </div>
+      {Object.keys(stats.saves).length > 0 && (
+        <div className="row" style={{ gap: 4, flexWrap: 'wrap' }}>
+          <span className="muted">Saves</span>
+          {Object.entries(stats.saves).map(([k, v]) => (
+            <span key={k} className="chip">
+              {k.toUpperCase()} {signed(v)}
+            </span>
+          ))}
+        </div>
+      )}
+      <div className="muted">{[...stats.speeds, ...stats.senses].join(' · ')}</div>
+      {defenses.map(([label, list]) => list.length > 0 && <div key={label}>{label}: {list.join(', ')}</div>)}
+    </>
   );
 }
 

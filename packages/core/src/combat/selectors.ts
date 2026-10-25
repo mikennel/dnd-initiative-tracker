@@ -21,6 +21,16 @@ export function effectiveHp(c: Combatant, pcLive: Record<number, PcSnapshot | un
   return c.hp;
 }
 
+/** A locally set AC (e.g. the DM noting Shield) wins over the sheet's AC. */
+export function effectiveAc(c: Combatant, snap: PcSnapshot | undefined): number | null {
+  return c.ac ?? snap?.stats?.ac ?? null;
+}
+
+/** DDB-linked PCs use the sheet's initiative bonus once it has been read. */
+export function effectiveInitBonus(c: Combatant, snap: PcSnapshot | undefined): number {
+  return snap?.stats?.initBonus ?? c.initBonus;
+}
+
 export interface PlayerViewCombatant {
   id: string;
   name: string;

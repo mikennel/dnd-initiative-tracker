@@ -1,8 +1,10 @@
 import {
   mapCharacter,
+  mapCharacterSummary,
   mapMonster,
   slimConfig,
   type DdbCharacter,
+  type DdbCharacterSummaryResponse,
   type DdbConfig,
   type DdbEncounter,
   type DdbMonster,
@@ -13,7 +15,8 @@ import type { Db, Kv } from '../store/db.ts';
 
 /**
  * The ONLY module that talks to D&D Beyond (docs/ddb-api.md). It is read-only by design
- * (ADR 0003): there is no method that writes to DDB, and `get()` refuses anything but GET.
+ * (ADR 0003): there is no method that writes to DDB. Requests are GETs, plus POSTs to the
+ * token endpoint and to the allowlisted read-only query endpoints (`query()`).
  */
 
 const AUTH_URL = 'https://auth-service.dndbeyond.com/v1/cobalt-token';
@@ -21,6 +24,9 @@ const CONFIG_URL = 'https://www.dndbeyond.com/api/config/json';
 const ENCOUNTERS = 'https://encounter-service.dndbeyond.com/v1/encounters';
 const MONSTERS = 'https://monster-service.dndbeyond.com/v1/Monster';
 const CHARACTER = 'https://character-service.dndbeyond.com/character/v5/character';
+const CHARACTER_SUMMARIES = 'https://character-service-scds.dndbeyond.com/v2/characters';
+/** POST endpoints that only read: the body is a query, nothing is changed (ADR 0003). */
+const READ_ONLY_POSTS = new Set([CHARACTER_SUMMARIES]);
 const CAMPAIGNS = 'https://www.dndbeyond.com/api/campaign';
 const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) dnd-initiative-tracker/0.1';
 const CONFIG_TTL_MS = 24 * 3600_000;
@@ -112,14 +118,34 @@ export class DdbClient {
   }
 
   /** Authenticated GET. Retries once with a fresh token on 401. */
-  async get<T>(url: string, retry = true): Promise<T> {
+  get<T>(url: string): Promise<T> {
+    return this.request<T>(url);
+  }
+
+  /**
+   * Authenticated read-only POST, for DDB query endpoints that take their parameters in the
+   * body. Only URLs in READ_ONLY_POSTS are allowed (ADR 0003).
+   */
+  query<T>(url: string, body: unknown): Promise<T> {
+    if (!READ_ONLY_POSTS.has(url)) throw new DdbError(`Refusing to POST to ${url}: not a known read-only query`, 500);
+    return this.request<T>(url, JSON.stringify(body));
+  }
+
+  private async request<T>(url: string, body?: string, retry = true): Promise<T> {
     const token = await this.getToken();
     const cookie = this.secrets.getCobaltSession();
     let res: Response;
     try {
       res = await this.fetchImpl(url, {
-        method: 'GET',
-        headers: { Authorization: `Bearer ${token}`, Cookie: `CobaltSession=${cookie}`, 'User-Agent': USER_AGENT, Accept: 'application/json' },
+        method: body === undefined ? 'GET' : 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Cookie: `CobaltSession=${cookie}`,
+          'User-Agent': USER_AGENT,
+          Accept: 'application/json',
+          ...(body === undefined ? {} : { 'Content-Type': 'application/json' }),
+        },
+        body,
       });
     } catch (err) {
       this.status = 'unreachable';
@@ -128,7 +154,7 @@ export class DdbClient {
     }
     if (res.status === 401 && retry) {
       this.token = null;
-      return this.get<T>(url, false);
+      return this.request<T>(url, body, false);
     }
     if (!res.ok) throw new DdbError(`D&D Beyond returned ${res.status} for ${new URL(url).pathname}`, res.status === 401 ? 401 : 502);
     this.status = 'ok';
@@ -235,6 +261,21 @@ export class DdbClient {
   }
 
   // ---------- Characters ----------
+
+  /**
+   * Precomputed summaries (AC, initiative, HP, conditions...) for many characters in one
+   * request. Ids DDB hasn't computed yet come back in `queued` and are missing from `found`.
+   */
+  async getCharacterSummaries(ids: number[]): Promise<{ found: PcSnapshot[]; missing: number[] }> {
+    const found: PcSnapshot[] = [];
+    for (let i = 0; i < ids.length; i += 50) {
+      const res = await this.query<DdbCharacterSummaryResponse>(CHARACTER_SUMMARIES, { characterIds: ids.slice(i, i + 50) });
+      const now = Date.now();
+      for (const s of res.foundCharacters ?? []) found.push(mapCharacterSummary(s, now));
+    }
+    const got = new Set(found.map((s) => s.characterId));
+    return { found, missing: ids.filter((id) => !got.has(id)) };
+  }
 
   async getCharacter(id: number): Promise<PcSnapshot> {
     const cfg = await this.getConfig();

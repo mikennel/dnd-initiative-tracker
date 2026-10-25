@@ -1,4 +1,4 @@
-import { rollD20, turnOrder, type CombatEventBody } from '@dnd/core';
+import { effectiveInitBonus, rollD20, turnOrder, type CombatEventBody } from '@dnd/core';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { AddCombatant } from '../components/AddCombatant.tsx';
@@ -83,6 +83,17 @@ function Tracker() {
     if (events.length) dispatch({ type: 'batch', label: 'Roll initiative', events });
   };
 
+  /** PCs usually roll their own, but this saves typing when they don't. Uses the sheet's bonus. */
+  const rollPcInitiative = () => {
+    const events: CombatEventBody[] = order
+      .filter((c) => c.kind === 'pc' && c.initiative === null)
+      .map((c) => {
+        const snap = c.source?.ddbCharacterId !== undefined ? pcLive[c.source.ddbCharacterId] : undefined;
+        return { type: 'initiative/set', id: c.id, value: rollD20(effectiveInitBonus(c, snap)).total };
+      });
+    if (events.length) dispatch({ type: 'batch', label: 'Roll PC initiative', events });
+  };
+
   const unrolled = order.filter((c) => c.initiative === null);
   const checkedIds = [...checked].filter((id) => state.combatants[id]);
 
@@ -154,6 +165,9 @@ function Tracker() {
         <label className="row muted small-label">
           <input type="checkbox" checked={groupInit} onChange={(e) => setGroupInit(e.target.checked)} /> by group
         </label>
+        <button onClick={rollPcInitiative} disabled={!unrolled.some((c) => c.kind === 'pc')} title="Roll for players without initiative, using their sheet's bonus">
+          🎲 Roll PCs
+        </button>
         <span className="sep" />
         <button onClick={() => setAdding(true)}>+ Add</button>
         <span className="grow" />
@@ -171,7 +185,7 @@ function Tracker() {
       <div className="tracker-banners">
         <DdbStatusBanner status={status?.ddb} />
         {!state.started && unrolled.some((c) => c.kind === 'pc') && order.length > 0 && (
-          <div className="banner">Enter the players' initiative rolls, roll for monsters, then start combat.</div>
+          <div className="banner">Enter the players' initiative rolls (or roll for them), roll for monsters, then start combat.</div>
         )}
         <Prompts state={state} dispatch={dispatch} />
       </div>

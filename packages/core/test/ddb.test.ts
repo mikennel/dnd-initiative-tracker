@@ -2,11 +2,12 @@ import { describe, expect, it } from 'vitest';
 import configJson from './fixtures/ddb-config.slim.json' with { type: 'json' };
 import type { DdbConfig } from '../src/ddb/config.ts';
 import { characterHp, mapCharacter, spellSlotMax } from '../src/ddb/mapCharacter.ts';
+import { mapCharacterSummary, mergePcSnapshot } from '../src/ddb/mapCharacterSummary.ts';
 import { encounterToEvents } from '../src/ddb/mapEncounter.ts';
 import { letterSuffix, mapMonster, monsterToCombatant } from '../src/ddb/mapMonster.ts';
 import { sanitizeHtml } from '../src/ddb/html.ts';
 import { extractResources } from '../src/ddb/parseStatBlock.ts';
-import type { DdbCharacter } from '../src/ddb/types.ts';
+import type { DdbCharacter, DdbCharacterSummary } from '../src/ddb/types.ts';
 import { difficulty2014, difficulty2024 } from '../src/encounter/difficulty.ts';
 import { beholder2024, legacyDragonMage } from './fixtures/monsters.ts';
 
@@ -148,6 +149,67 @@ describe('mapCharacter', () => {
     expect(snap.spellSlots[0]).toEqual({ level: 1, max: 4, used: 1 });
     expect(snap.limitedUses).toEqual([{ name: 'Lay On Hands', max: 1, used: 0 }]);
     expect(snap.level).toBe(9);
+  });
+});
+
+/** Shaped like a real scds summary (multiclass caster with two save DCs). */
+const summary: DdbCharacterSummary = {
+  characterId: 1001,
+  name: 'Test Paladin',
+  level: 9,
+  armorClass: 21,
+  initiativeBonus: 1,
+  proficiencyBonus: 4,
+  passivePerception: 16,
+  passiveInsight: 12,
+  passiveInvestigation: 11,
+  hitPointInfo: { maximum: 110, current: 55, temp: 0 },
+  conditions: [{ name: 'Exhaustion', level: 1 }, { name: 'Restrained', level: null }],
+  deathSaveInfo: { failCount: 0, successCount: 0 },
+  abilities: [
+    { name: 'con', score: 20, modifier: 5, save: 9 },
+    { name: 'cha', score: 18, modifier: 4, save: 8 },
+  ],
+  castingInfo: {
+    saveDcs: [{ value: 16, sources: ['Paladin'] }, { value: 17, sources: ['Sorcerer'] }],
+    spellAttacks: [{ value: 9, sources: ['Paladin', 'Sorcerer'] }],
+  },
+  speeds: [{ name: 'Walking', distance: 30 }],
+  senses: [{ name: 'Darkvision', distance: '60 ft.' }],
+  resistances: [{ name: 'Poison' }],
+  classes: [{ name: 'Paladin', level: 1, subclassName: null }, { name: 'Sorcerer', level: 8, subclassName: 'Wild Magic Sorcery' }],
+  race: { name: 'Loxodon' },
+  decorations: { avatar: { avatarUrl: 'https://example.test/a.jpeg' } },
+};
+
+describe('mapCharacterSummary', () => {
+  it('takes DDB-computed AC, initiative, HP and stats as-is', () => {
+    const snap = mapCharacterSummary(summary, 200);
+    expect(snap.hp).toEqual({ current: 55, max: 110, temp: 0 });
+    expect(snap.conditions).toEqual([{ name: 'Exhaustion', level: 1 }, { name: 'Restrained' }]);
+    expect(snap.stats).toMatchObject({
+      ac: 21,
+      initBonus: 1,
+      passive: { perception: 16, insight: 12, investigation: 11 },
+      saves: { con: 9, cha: 8 },
+      spellcasting: [
+        { dc: 16, attack: 9, sources: ['Paladin'] },
+        { dc: 17, attack: 9, sources: ['Sorcerer'] },
+      ],
+      senses: ['Darkvision 60 ft.'],
+      resistances: ['Poison'],
+      classes: 'Paladin 1 / Sorcerer (Wild Magic Sorcery) 8',
+    });
+  });
+
+  it('merges slots and limited uses from the slower v5 sheet', () => {
+    const sheet = mapCharacter(character, cfg, 100);
+    const merged = mergePcSnapshot(mapCharacterSummary(summary, 200), sheet)!;
+    expect(merged.stats?.ac).toBe(21);
+    expect(merged.conditions).toEqual([{ name: 'Exhaustion', level: 1 }, { name: 'Restrained' }]); // newer summary wins
+    expect(merged.spellSlots[0]).toEqual({ level: 1, max: 4, used: 1 });
+    expect(merged.limitedUses).toEqual([{ name: 'Lay On Hands', max: 1, used: 0 }]);
+    expect(mergePcSnapshot(undefined, sheet)).toBe(sheet);
   });
 });
 

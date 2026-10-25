@@ -12,6 +12,18 @@ const encounter = {
   players: [{ id: '1001', name: 'Hero', level: 8, type: 'CHARACTER_TYPE_DDB', hidden: false, initiative: null }],
 };
 
+const heroSummary = {
+  characterId: 1001,
+  name: 'Hero',
+  level: 8,
+  armorClass: 18,
+  initiativeBonus: 4,
+  passivePerception: 14,
+  hitPointInfo: { maximum: 60, current: 41, temp: 5 },
+  conditions: [{ name: 'Poisoned', level: null }],
+  deathSaveInfo: { failCount: 0, successCount: 0 },
+};
+
 interface Call { url: string; method: string }
 
 function fakeDdb(opts: { validCookie?: string } = {}) {
@@ -26,6 +38,10 @@ function fakeDdb(opts: { validCookie?: string } = {}) {
     if (url.includes('auth-service')) return cookie === `CobaltSession=${valid}` ? json({ token: 'tok', ttl: 300 }) : json({}, 401);
     if (url.includes('encounter-service')) return json({ data: encounter });
     if (url.includes('monster-service')) return json({ data: [beholder2024], pagination: { total: 1 } });
+    if (url.includes('character-service-scds')) {
+      const ids = (JSON.parse(String(init?.body)) as { characterIds: number[] }).characterIds;
+      return json({ foundCharacters: ids.filter((id) => id === 1001).map(() => heroSummary), queuedIds: ids.filter((id) => id !== 1001), notFoundIds: [] });
+    }
     if (url.includes('character-service')) return json({ data: null }, 404);
     return json({}, 404);
   }) as typeof fetch;
@@ -81,9 +97,23 @@ describe('API', () => {
     expect(state.statBlocks['5194923'].name).toBe('Beholder');
     expect(state.combatants.u1.resources.map((r) => r.name)).toEqual(['Legendary Resistance', 'Legendary Actions']);
 
-    // Read-only guarantee (ADR 0003): the only non-GET request to DDB is the token mint.
+    // Read-only guarantee (ADR 0003): non-GET requests go only to the token mint and the
+    // read-only summary query.
+    await ctx.poller.tick([1001]);
     const nonGet = ddb.calls.filter((c) => c.method !== 'GET');
-    expect(nonGet.every((c) => c.url.includes('auth-service') && c.method === 'POST')).toBe(true);
+    expect(nonGet.length).toBeGreaterThan(0);
+    expect(nonGet.every((c) => c.method === 'POST' && (c.url.includes('auth-service') || c.url.includes('character-service-scds')))).toBe(true);
+  });
+
+  it('polls PC summaries for AC, initiative and HP in one request', async () => {
+    const { ctx, ddb } = await setup('good-cookie');
+    await ctx.poller.tick([1001, 2002]);
+    expect(ddb.calls.filter((c) => c.url.includes('scds'))).toHaveLength(1);
+    const snap = ctx.poller.get([1001, 2002]);
+    expect(snap[1001]).toMatchObject({ hp: { current: 41, max: 60, temp: 5 }, conditions: [{ name: 'Poisoned' }], stats: { ac: 18, initBonus: 4 } });
+    // 2002 wasn't in the summary and its sheet 404s, so there is nothing to show yet.
+    expect(snap[2002]).toBeUndefined();
+    expect(ctx.poller.errors.get(2002)).toMatch(/404/);
   });
 
   it('accepts events over HTTP and dedups retries', async () => {

@@ -30,8 +30,10 @@
 
 ## Next up
 - [ ] Verify import, PC sync and monster search against live DDB once the cookie is connected
-- [ ] PC AC, initiative bonus and passive Perception from the `scds` batch endpoint (precomputed by DDB; needs a read-only POST, see docs/ddb-api.md)
-- [ ] Poll PCs with one `scds` request instead of one v5 sheet per character; keep v5 for spell slots at a slower rate
+- [x] PC AC, initiative bonus, passives, saves, spell DC, senses and defenses from the `scds` batch endpoint (ADR 0003 amended for read-only POST queries)
+- [x] Poll PCs with one `scds` request; v5 sheets every 30 s for spell slots and limited uses
+- [ ] Measure how quickly scds reflects a sheet edit (needs a player to change something)
+- [ ] Electron desktop app with in-app D&D Beyond sign-in (see plan)
 
 ## Later
 - Chrome extension "import this page"

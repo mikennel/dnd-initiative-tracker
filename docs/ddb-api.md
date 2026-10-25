@@ -145,7 +145,9 @@ Everything here is already computed by DDB (AC, initiative and max HP include it
 feats and class features), so we don't have to re-implement the rules engine. Taldum's
 `hitPointInfo` (55/110) matched our own v5-derived calculation. Spell slots and limited-use
 actions are **not** included; they still need the v5 sheet. `queuedIds` suggests a cache
-that is recomputed on demand. How quickly it reflects a sheet edit is **not yet measured**.
+that is recomputed on demand: an unknown id came back in `queuedIds`, not `notFoundIds`. Results are
+not in request order, so match them by `characterId`. How quickly it reflects a sheet edit is **not yet measured**.
+Used by `DdbClient.getCharacterSummaries` → `mapCharacterSummary` (`packages/core/src/ddb/mapCharacterSummary.ts`).
 
 ### Live updates: game log (verified, but carries no sheet changes)
 DDB's "game log" is a campaign message broker:

@@ -1,4 +1,4 @@
-import { effectiveHp, type CombatEventBody, type Combatant, type PcSnapshot } from '@dnd/core';
+import { effectiveAc, effectiveHp, effectiveInitBonus, signed, type CombatEventBody, type Combatant, type PcSnapshot } from '@dnd/core';
 import { memo, useState, type KeyboardEvent } from 'react';
 import { ago, Avatar, HpBar } from './bits.tsx';
 
@@ -27,7 +27,7 @@ export const CombatantRow = memo(function CombatantRow({ c, active, selected, ch
       onClick={onSelect}
     >
       <input type="checkbox" aria-label={`Select ${c.name}`} checked={checked} onClick={(e) => e.stopPropagation()} onChange={(e) => onCheck(e.target.checked)} />
-      <InitiativeInput c={c} dispatch={dispatch} />
+      <InitiativeInput c={c} bonus={effectiveInitBonus(c, snap)} dispatch={dispatch} />
       <Avatar url={c.avatarUrl ?? snap?.avatarUrl} name={c.name} />
       <div className="crow-main">
         <div className="crow-name">
@@ -70,8 +70,8 @@ export const CombatantRow = memo(function CombatantRow({ c, active, selected, ch
           {c.kind === 'effect' && c.roundsRemaining !== undefined && <span className="chip">{c.roundsRemaining} rds left</span>}
         </div>
       </div>
-      <div className="crow-ac" title="Armor Class">
-        {c.ac ?? '—'}
+      <div className="crow-ac" title={c.ac === null && snap?.stats ? 'Armor Class (from the D&D Beyond sheet)' : 'Armor Class'}>
+        {effectiveAc(c, snap) ?? '—'}
         <small>AC</small>
       </div>
       <div className="crow-hp" onClick={(e) => e.stopPropagation()}>
@@ -106,7 +106,7 @@ function conditionLabel(x: Combatant['conditions'][number]) {
   return base;
 }
 
-function InitiativeInput({ c, dispatch }: { c: Combatant; dispatch: Props['dispatch'] }) {
+function InitiativeInput({ c, bonus, dispatch }: { c: Combatant; bonus: number; dispatch: Props['dispatch'] }) {
   const [draft, setDraft] = useState<string | null>(null);
   const commit = () => {
     if (draft === null) return;
@@ -122,8 +122,9 @@ function InitiativeInput({ c, dispatch }: { c: Combatant; dispatch: Props['dispa
       type="number"
       inputMode="numeric"
       aria-label={`Initiative for ${c.name}`}
+      title={`Initiative bonus ${signed(bonus)}`}
       value={draft ?? c.initiative ?? ''}
-      placeholder="—"
+      placeholder={signed(bonus)}
       onClick={(e) => e.stopPropagation()}
       onChange={(e) => setDraft(e.target.value)}
       onBlur={commit}

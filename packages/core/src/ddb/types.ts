@@ -199,4 +199,61 @@ export interface PcSnapshot {
   avatarUrl: string | null;
   /** Epoch ms of the successful fetch. */
   fetchedAt: number;
+  /** Precomputed stats from the scds summary endpoint. Absent if only the v5 sheet was read. */
+  stats?: PcStats;
+}
+
+export interface PcStats {
+  ac: number;
+  initBonus: number;
+  proficiencyBonus: number;
+  passive: { perception: number; insight: number; investigation: number };
+  /** Saving throw totals, keyed str..cha. */
+  saves: Record<string, number>;
+  /** One entry per distinct DC, e.g. a Paladin/Sorcerer has two. */
+  spellcasting: { dc: number; attack: number | null; sources: string[] }[];
+  speeds: string[];
+  senses: string[];
+  resistances: string[];
+  immunities: string[];
+  vulnerabilities: string[];
+  classes: string;
+  race: string;
+  inspiration: boolean;
+}
+
+/** `POST character-service-scds.dndbeyond.com/v2/characters` result (docs/ddb-api.md). */
+export interface DdbCharacterSummary {
+  characterId: number;
+  name: string;
+  level: number;
+  armorClass: number;
+  initiativeBonus: number;
+  proficiencyBonus?: number;
+  passivePerception?: number;
+  passiveInsight?: number;
+  passiveInvestigation?: number;
+  hitPointInfo: { maximum: number; current: number; temp: number | null };
+  conditions?: { name: string; level: number | null }[];
+  deathSaveInfo?: { failCount: number; successCount: number; isStabilized?: boolean };
+  abilities?: { name: string; score: number; modifier: number; save: number }[];
+  castingInfo?: {
+    saveDcs?: { value: number; sources: string[] }[];
+    spellAttacks?: { value: number; sources: string[] }[];
+  };
+  speeds?: { name: string; distance: number }[];
+  senses?: { name: string; distance: string }[];
+  resistances?: { name: string }[];
+  immunities?: { name: string }[];
+  vulnerabilities?: { name: string }[];
+  classes?: { name: string; level: number; subclassName: string | null }[];
+  race?: { name: string } | null;
+  inspiration?: boolean;
+  decorations?: { avatar?: { avatarUrl?: string | null } | null } | null;
+}
+
+export interface DdbCharacterSummaryResponse {
+  foundCharacters: DdbCharacterSummary[];
+  queuedIds?: number[];
+  notFoundIds?: number[];
 }

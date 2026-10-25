@@ -25,9 +25,9 @@
 | `packages/core/src/ddb` | DDB payload types, `slimConfig`, `mapMonster`, `mapCharacter`, `mapEncounter`, `parseStatBlock` |
 | `packages/core/src/encounter` | XP/CR difficulty (2014 and 2024 rules) |
 | `packages/core/src/dice.ts` | Dice rolling helpers (randomness lives at the edges, never in the reducer) |
-| `apps/server/src/ddb` | `DdbClient` (cookie → token, typed GETs, config cache), the **only** module that talks to DDB |
+| `apps/server/src/ddb` | `DdbClient` (cookie → token, typed GETs, allowlisted read-only POST queries, config cache), the **only** module that talks to DDB |
 | `apps/server/src/store` | `node:sqlite` database: `combats`, `events`, `monster_cache`, `kv` |
-| `apps/server/src/sync/pcPoller.ts` | Polls DDB characters referenced by active combats and broadcasts `pcLive` updates |
+| `apps/server/src/sync/pcPoller.ts` | Polls DDB characters referenced by active combats and broadcasts `pcLive` updates. Every 6 s: one scds summary request for all PCs (HP, conditions, AC, initiative). Every 30 s, or when a PC is missing from the summary or scds fails: the full v5 sheet per PC (spell slots, limited uses). `mergePcSnapshot` combines the two. DDB has no live push for sheet changes, so polling is the design (docs/ddb-api.md) |
 | `apps/server/src/ws.ts` | WebSocket hub: DM channel (full state + events) and table channel (`playerView` only) |
 | `apps/web/src/lib/combatClient.ts` | Client sync engine: server events + local pending queue (IndexedDB) → `materialize` |
 

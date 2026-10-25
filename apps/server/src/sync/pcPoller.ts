@@ -1,15 +1,17 @@
-import type { PcSnapshot } from '@dnd/core';
+import { mergePcSnapshot, type PcSnapshot } from '@dnd/core';
 import type { Kv } from '../store/db.ts';
 import type { DdbClient } from '../ddb/client.ts';
 
 /**
- * Polls DDB character sheets for PCs in combats that someone is currently viewing, and
- * reports changes (ADR 0003). Polling a handful of characters every few seconds is cheap.
- * The game-log websocket could replace this later (docs/ddb-api.md#live-updates-unverified).
+ * Polls DDB for PCs in combats that someone is currently viewing, and reports changes
+ * (ADR 0003). DDB has no live feed for sheet changes (docs/ddb-api.md, "Live updates"),
+ * so polling is the mechanism, not a stopgap.
  */
 export class PcPoller {
   readonly snapshots = new Map<number, PcSnapshot>();
   readonly errors = new Map<number, string>();
+  private summaries = new Map<number, PcSnapshot>();
+  private sheets = new Map<number, PcSnapshot>();
   private timer: NodeJS.Timeout | null = null;
   private running = false;
   private failures = 0;
@@ -20,6 +22,7 @@ export class PcPoller {
     private watched: () => Set<number>,
     private onUpdate: (snaps: PcSnapshot[], changed: PcSnapshot[]) => void,
     private intervalMs = 6000,
+    private sheetEveryMs = 30_000,
   ) {
     // Restore last-known values so PCs show something even if DDB is unreachable after a restart.
     for (const snap of kv.get<PcSnapshot[]>('pc:last') ?? []) this.snapshots.set(snap.characterId, snap);
@@ -41,7 +44,11 @@ export class PcPoller {
     this.timer = null;
   }
 
-  /** Fetch now (e.g. right after a combat is imported). */
+  /**
+   * One poll. Each tick reads all summaries in a single scds request (HP, conditions, AC,
+   * initiative). Full v5 sheets (spell slots, limited uses) are read every `sheetEveryMs`,
+   * and every tick for characters the summary didn't return or when scds fails.
+   */
   async tick(only?: number[]): Promise<void> {
     if (this.running) return;
     if (this.ddb.status === 'unconfigured' || this.ddb.status === 'auth-failed') return;
@@ -51,19 +58,33 @@ export class PcPoller {
     const changed: PcSnapshot[] = [];
     let failed = false;
     try {
-      const results = await Promise.allSettled(ids.map((id) => this.ddb.getCharacter(id)));
+      let needSheet = ids;
+      try {
+        const { found, missing } = await this.ddb.getCharacterSummaries(ids);
+        for (const snap of found) this.summaries.set(snap.characterId, snap);
+        const now = Date.now();
+        needSheet = only ?? ids.filter((id) => missing.includes(id) || now - (this.sheets.get(id)?.fetchedAt ?? 0) >= this.sheetEveryMs);
+      } catch (err) {
+        // Fall back to per-character sheets; previous AC/initiative stay until scds recovers.
+        for (const id of ids) this.errors.set(id, `summary: ${String((err as Error)?.message ?? err)}`);
+      }
+      const results = await Promise.allSettled(needSheet.map((id) => this.ddb.getCharacter(id)));
       results.forEach((r, i) => {
-        const id = ids[i];
-        if (r.status === 'fulfilled') {
-          const prev = this.snapshots.get(id);
-          this.snapshots.set(id, r.value);
-          this.errors.delete(id);
-          if (!prev || !sameSnapshot(prev, r.value)) changed.push(r.value);
-        } else {
+        const id = needSheet[i];
+        if (r.status === 'fulfilled') this.sheets.set(id, r.value);
+        else {
           failed = true;
           this.errors.set(id, String(r.reason?.message ?? r.reason));
         }
       });
+      for (const id of ids) {
+        const merged = mergePcSnapshot(this.summaries.get(id), this.sheets.get(id));
+        if (!merged) continue;
+        const prev = this.snapshots.get(id);
+        this.snapshots.set(id, merged);
+        if (!failed) this.errors.delete(id);
+        if (!prev || !sameSnapshot(prev, merged)) changed.push(merged);
+      }
     } finally {
       this.running = false;
     }
@@ -84,5 +105,6 @@ export class PcPoller {
 }
 
 function sameSnapshot(a: PcSnapshot, b: PcSnapshot): boolean {
+  // fetchedAt changes every poll; only real sheet changes count.
   return JSON.stringify({ ...a, fetchedAt: 0 }) === JSON.stringify({ ...b, fetchedAt: 0 });
 }

@@ -19,8 +19,9 @@ CombatState {
 | Field | Notes |
 |---|---|
 | `kind` | `pc`, `monster`, `npc`, or `effect` (lair actions, hazards, spell zones) |
-| `initiative`, `initBonus`, `dex`, `order` | Sort keys, in that order (`order.ts`) |
+| `initiative`, `initBonus`, `dex`, `order` | Sort keys, in that order (`order.ts`). For DDB-linked PCs, rolling uses the sheet's bonus (`effectiveInitBonus`); the tiebreak still uses the local `initBonus` because the reducer can't see polled data |
 | `hp` | `{current,max,temp}`, or `null` for DDB-linked PCs (HP comes from `PcSnapshot`, ADR 0003) |
+| `ac` | Number, or `null`. For DDB-linked PCs it stays `null` and the UI shows the sheet's AC (`effectiveAc`). A value set by the DM overrides the sheet (e.g. Shield) |
 | `conditions[]` | See below |
 | `concentration` | Spell name, or null |
 | `resources[]` | See below |
@@ -73,3 +74,12 @@ Kinds: `concentration`, `recharge`, `save`, `effect`.
 
 ## Player view
 `selectors.ts → playerView(state, pcLive)`. See [ADR 0005](decisions/0005-player-view-projection.md).
+
+## PcSnapshot (polled, not event-sourced)
+Live PC state from DDB (ADR 0003), built by `mapCharacterSummary` (scds) and `mapCharacter`
+(v5 sheet) and merged by `mergePcSnapshot`:
+- `hp`, `conditions` (by name, Exhaustion with level), `deathSaves`: newest source wins.
+- `spellSlots`, `pactSlots`, `limitedUses`: v5 sheet only.
+- `stats` (scds only, optional): `ac`, `initBonus`, `proficiencyBonus`, `passive{perception,
+  insight, investigation}`, `saves{str..cha}`, `spellcasting[]{dc, attack, sources}`, `speeds`,
+  `senses`, `resistances`, `immunities`, `vulnerabilities`, `classes`, `race`, `inspiration`.

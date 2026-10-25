@@ -12,5 +12,6 @@ export * from './ddb/html.ts';
 export * from './ddb/parseStatBlock.ts';
 export * from './ddb/mapMonster.ts';
 export * from './ddb/mapCharacter.ts';
+export * from './ddb/mapCharacterSummary.ts';
 export * from './ddb/mapEncounter.ts';
 export * from './encounter/difficulty.ts';
