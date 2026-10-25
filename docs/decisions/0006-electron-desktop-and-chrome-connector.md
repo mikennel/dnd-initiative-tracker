@@ -31,6 +31,12 @@ So "log in inside the app window" doesn't work.
   by hand remains as a fallback.
 - **Settings endpoints are loopback-only**, because the server listens on the LAN.
 
+## Amendment (2026-10-25): macOS ad-hoc signature
+Apple Silicon won't run code that has no signature at all; it reports the app as "damaged".
+`apps/desktop/scripts/after-pack.cjs` ad-hoc signs the `.app` (`codesign --sign -`), which is
+free and needs no Apple account. Gatekeeper still asks once (**Open Anyway**), as for any app
+from an unidentified developer.
+
 ## Consequences
 - Two install steps the first time: the app, and the extension (Developer mode → Load unpacked).
 - The extension must be updated if the tracker's port range changes (5173, 5175–5177).

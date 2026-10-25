@@ -1,4 +1,4 @@
-import { app, BrowserWindow, clipboard, dialog, Menu, shell, type MenuItemConstructorOptions } from 'electron';
+import { app, BrowserWindow, clipboard, dialog, Menu, nativeImage, shell, Tray, type MenuItemConstructorOptions } from 'electron';
 import { join } from 'node:path';
 import { startServer, type RunningServer } from '@dnd/server/src/start.ts';
 import { checkForUpdatesManually, initUpdates, RELEASES_URL } from './updates.ts';
@@ -10,6 +10,9 @@ import { checkForUpdatesManually, initUpdates, RELEASES_URL } from './updates.ts
 
 let server: RunningServer | null = null;
 let win: BrowserWindow | null = null;
+let tray: Tray | null = null;
+/** The Hooded DM icon (build/icon.png, packaged inside the app) for the window, dock and tray. */
+const iconPath = join(app.getAppPath(), 'build', 'icon.png');
 /**
  * `npm run dev:desktop`: the window loads the Vite dev server (hot reload) and the API comes
  * from `npm run dev`'s server, so the app doesn't start its own.
@@ -17,9 +20,15 @@ let win: BrowserWindow | null = null;
 const devUrl = process.env.DND_DEV_URL;
 let appOrigin = '';
 
+// Dev runs get their own profile, so they neither block an installed copy (single-instance
+// lock) nor share its cache.
+if (devUrl) app.setPath('userData', join(app.getPath('appData'), 'DnD Initiative Tracker (dev)'));
+
 const dataDir = process.env.DATA_DIR ?? join(app.getPath('userData'), 'data');
 const staticDir = app.isPackaged ? join(process.resourcesPath, 'web') : join(app.getAppPath(), '../web/dist');
 const extensionDir = app.isPackaged ? join(process.resourcesPath, 'extension') : join(app.getAppPath(), '../extension');
+
+if (process.platform === 'win32') app.setAppUserModelId('com.mikennel.dnd-initiative-tracker');
 
 if (!app.requestSingleInstanceLock()) {
   app.quit();
@@ -40,6 +49,8 @@ async function boot() {
     appOrigin = `http://localhost:${server.port}`;
   }
   Menu.setApplicationMenu(buildMenu());
+  if (process.platform === 'darwin' && !app.isPackaged) app.dock?.setIcon(iconPath);
+  createTray();
   openMainWindow();
   initUpdates();
   app.on('activate', () => {
@@ -61,6 +72,7 @@ function openMainWindow() {
     minWidth: 800,
     minHeight: 500,
     title: 'DnD Initiative Tracker',
+    icon: iconPath,
     show: false,
     webPreferences: { contextIsolation: true, sandbox: true, nodeIntegration: false },
   });
@@ -91,6 +103,30 @@ function routeLinks(w: BrowserWindow) {
       void shell.openExternal(url);
     }
   });
+}
+
+function showMainWindow() {
+  if (!win) return openMainWindow();
+  if (win.isMinimized()) win.restore();
+  win.show();
+  win.focus();
+}
+
+/** Tray icon: shows the tracker is running (it serves the table view) and offers quick links. */
+function createTray() {
+  const size = process.platform === 'darwin' ? 18 : 32;
+  tray = new Tray(nativeImage.createFromPath(iconPath).resize({ width: size, height: size, quality: 'best' }));
+  tray.setToolTip('DnD Initiative Tracker');
+  tray.setContextMenu(
+    Menu.buildFromTemplate([
+      { label: 'Show Tracker', click: showMainWindow },
+      { label: 'Open Table View in Browser', click: () => void shell.openExternal(`${origin()}/table`) },
+      { label: 'Copy Table Link for Other Devices', click: () => clipboard.writeText(`${server?.ctx.lanUrls[0] ?? origin()}/table`) },
+      { type: 'separator' },
+      { label: 'Quit', role: 'quit' },
+    ]),
+  );
+  if (process.platform !== 'darwin') tray.on('click', showMainWindow);
 }
 
 function buildMenu(): Menu {

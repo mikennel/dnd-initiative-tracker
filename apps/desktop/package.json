@@ -28,6 +28,7 @@
     },
     "files": [
       "dist/**",
+      "build/icon.png",
       "package.json"
     ],
     "extraResources": [
@@ -81,6 +82,7 @@
         "repo": "dnd-initiative-tracker",
         "releaseType": "release"
       }
-    ]
+    ],
+    "afterPack": "./scripts/after-pack.cjs"
   }
 }
