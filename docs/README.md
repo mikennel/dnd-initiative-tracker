@@ -21,6 +21,7 @@ relevant page in the same commit.
 | [0003](decisions/0003-pcs-read-only-monsters-local.md) | PCs read-only from DDB; monsters local |
 | [0004](decisions/0004-typescript-monorepo-stack.md) | TypeScript monorepo stack |
 | [0005](decisions/0005-player-view-projection.md) | Player view is a server-side projection |
+| [0006](decisions/0006-electron-desktop-and-chrome-connector.md) | Electron desktop app; Chrome extension hands over the D&D Beyond login |
 
 ### Writing an ADR
 Copy the newest ADR and bump the number. Keep it short: **Context** (why we had to decide),

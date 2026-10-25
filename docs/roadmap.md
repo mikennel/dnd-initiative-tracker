@@ -33,7 +33,10 @@
 - [x] PC AC, initiative bonus, passives, saves, spell DC, senses and defenses from the `scds` batch endpoint (ADR 0003 amended for read-only POST queries)
 - [x] Poll PCs with one `scds` request; v5 sheets every 30 s for spell slots and limited uses
 - [ ] Measure how quickly scds reflects a sheet edit (needs a player to change something)
-- [ ] Electron desktop app with in-app D&D Beyond sign-in (see plan)
+- [x] Electron desktop app (Windows installer built locally; macOS via GitHub Actions), ADR 0006
+- [x] Chrome connector extension: one-click D&D Beyond login handoff, works with Google sign-in
+- [ ] App icon
+- [ ] Auto-update from GitHub Releases
 
 ## Later
 - Chrome extension "import this page"

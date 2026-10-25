@@ -19,6 +19,26 @@ The console prints LAN URLs. Open `http://<laptop-ip>:5175/table` on the TV or t
 follows whichever combat the DM opened last. Windows may ask to allow Node through the
 firewall the first time. Allow it on private networks.
 
+## Desktop app (ADR 0006)
+```
+npm run desktop    # builds the web app, bundles apps/desktop and opens it in Electron
+npm run dist       # Windows installer → apps/desktop/release/DnD Initiative Tracker Setup x.y.z.exe
+```
+The installer is unsigned. Windows shows SmartScreen once: **More info → Run anyway**.
+macOS builds come from GitHub Actions (**Actions → Desktop builds → Run workflow**, or push a
+`v*` tag); download the `.dmg` from the run's artifacts. macOS blocks the first launch: open
+**System Settings → Privacy & Security** and click **Open Anyway**. If it says the app "is
+damaged", run `xattr -cr "/Applications/DnD Initiative Tracker.app"` once.
+
+The desktop app keeps its data in the OS app-data folder (**File → Open Data Folder**), not
+in `apps/server/data/`. To bring over combats from the npm version, quit the app and copy
+`tracker.db` (and `secrets.json` if you like) into that folder.
+
+## Connecting D&D Beyond with the Chrome extension
+Install `apps/extension` once (see its README: `chrome://extensions` → Developer mode →
+Load unpacked). Then use **Settings → Connect with Chrome**. In the desktop app this opens
+the Settings page in Chrome, where the extension does the work.
+
 ## Scripts
 | Command | What it does |
 |---|---|

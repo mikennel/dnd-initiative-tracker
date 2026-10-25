@@ -23,3 +23,4 @@ model, DDB API notes and the ADRs.
 - `npm test`: Vitest (core and server)
 - `npm run typecheck`
 - `npm run build && npm start`: production build served by the server on the LAN
+- `npm run desktop` / `npm run dist`: run the Electron app / build the Windows installer (ADR 0006)
