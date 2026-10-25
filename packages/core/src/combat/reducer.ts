@@ -1,5 +1,5 @@
 import type { CombatEvent, CombatEventBody } from './events.ts';
-import { activeTurnOrder } from './order.ts';
+import { activeTurnOrder, compareInitiative } from './order.ts';
 import type { Combatant, CombatPrompt, CombatState } from './types.ts';
 import { DEFAULT_SETTINGS } from './types.ts';
 
@@ -15,6 +15,7 @@ export function initialState(id: string): CombatState {
     sourceEncounterId: null,
     combatants: {},
     started: false,
+    lineup: false,
     round: 0,
     activeId: null,
     prompts: [],
@@ -60,8 +61,14 @@ export function apply(s: CombatState, e: CombatEventBody, eventId: string): void
     case 'combat/settings':
       s.settings = { ...s.settings, ...e.patch };
       return;
+    case 'combat/lineup':
+      if (s.started || s.lineup === e.open) return;
+      s.lineup = e.open;
+      log(e.open ? 'Initiative order shown to the players' : 'Back to setup');
+      return;
     case 'combat/started': {
       s.started = true;
+      s.lineup = false;
       s.round = 1;
       s.prompts = [];
       const first = activeTurnOrder(s)[0];
@@ -72,6 +79,7 @@ export function apply(s: CombatState, e: CombatEventBody, eventId: string): void
     }
     case 'combat/ended':
       s.started = false;
+      s.lineup = false;
       s.activeId = null;
       s.prompts = [];
       log('Combat ended');
@@ -104,8 +112,23 @@ export function apply(s: CombatState, e: CombatEventBody, eventId: string): void
       Object.assign(c, e.patch);
       return;
     case 'initiative/set':
-      if (c) c.initiative = e.value;
+      if (!c) return;
+      c.initiative = e.value;
+      delete c.tiebreak;
       return;
+    case 'initiative/swapped': {
+      const a = s.combatants[e.a];
+      const b = s.combatants[e.b];
+      if (!a || !b || a === b) return;
+      const aWasFirst = compareInitiative(a, b) < 0;
+      [a.initiative, b.initiative] = [b.initiative, a.initiative];
+      // On a tied roll swapping numbers changes nothing, so make the trade explicit.
+      delete a.tiebreak;
+      delete b.tiebreak;
+      if (a.initiative === b.initiative) (aWasFirst ? b : a).tiebreak = 1;
+      log(`${a.name} and ${b.name} swapped initiative (Alert)`);
+      return;
+    }
     case 'hp/damage': {
       if (!c || e.amount <= 0) return;
       let rest = e.amount;

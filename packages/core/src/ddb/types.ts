@@ -119,6 +119,7 @@ export interface DdbCharacter {
   deathSaves?: { failCount: number | null; successCount: number | null; isStabilized: boolean };
   spellSlots?: { level: number; used: number; available: number }[];
   pactMagic?: { level: number; used: number; available: number }[];
+  feats?: { definition?: { name: string } | null }[];
   actions?: Record<string, { name: string; limitedUse?: { maxUses: number; numberUsed: number; resetType?: number } | null }[] | null>;
   decorations?: { avatarUrl?: string | null } | null;
   avatarUrl?: string | null;
@@ -196,6 +197,8 @@ export interface PcSnapshot {
   spellSlots: { level: number; max: number; used: number }[];
   pactSlots: { level: number; max: number; used: number }[];
   limitedUses: { name: string; max: number; used: number }[];
+  /** Feat names from the v5 sheet (e.g. "Alert" for the lineup's initiative swap). */
+  feats?: string[];
   avatarUrl: string | null;
   /** Epoch ms of the successful fetch. */
   fetchedAt: number;

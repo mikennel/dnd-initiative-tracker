@@ -46,6 +46,7 @@ export function describeEvent(e: CombatEventBody, s?: CombatState): string {
     case 'combat/created': return 'Create combat';
     case 'combat/renamed': return 'Rename combat';
     case 'combat/settings': return 'Change settings';
+    case 'combat/lineup': return e.open ? 'Show order to players' : 'Back to setup';
     case 'combat/started': return 'Start combat';
     case 'combat/ended': return 'End combat';
     case 'statblock/added': return 'Add stat block';
@@ -53,6 +54,7 @@ export function describeEvent(e: CombatEventBody, s?: CombatState): string {
     case 'combatant/removed': return `Remove ${name(e.id)}`;
     case 'combatant/updated': return `Edit ${name(e.id)}`;
     case 'initiative/set': return `Initiative for ${name(e.id)}`;
+    case 'initiative/swapped': return `Alert: ${name(e.a)} ⇄ ${name(e.b)}`;
     case 'hp/damage': return `${e.amount} damage to ${name(e.id)}`;
     case 'hp/heal': return `Heal ${name(e.id)} ${e.amount}`;
     case 'hp/temp': return `Temp HP for ${name(e.id)}`;

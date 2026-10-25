@@ -17,6 +17,11 @@ filtered **on the server** before it is sent:
 - PC HP is shown exactly (players see it on their sheets anyway).
 - Notes, stat blocks, resources and DM prompts are never sent.
 
+## Amendment (2026-10-25): phases
+Before combat starts, the projection contains **only player characters**: enemies appear on
+`/table` when the DM starts combat. During the lineup phase it also carries each player's
+initiative so they can arrange Alert swaps (see docs/domain-model.md, "Combat phases").
+
 ## Consequences
 - The DM view and player view can't diverge in logic. Both derive from the same state.
 - Adding a field to the player view means adding it to `PlayerViewCombatant` on purpose.

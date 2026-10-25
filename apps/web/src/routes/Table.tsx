@@ -71,12 +71,13 @@ export function Table() {
     <div className="table-view">
       <header>
         <h1>{view.name}</h1>
-        <div className="table-round">{view.started ? <>Round {view.round}</> : 'Get ready…'}</div>
+        <div className="table-round">{view.phase === 'active' ? <>Round {view.round}</> : view.phase === 'lineup' ? 'Initiative order' : 'Get ready…'}</div>
         <button className="ghost" onClick={() => document.documentElement.requestFullscreen?.()} title="Full screen">
           ⛶
         </button>
         {!connected && <span className="dot offline" title="Reconnecting" />}
       </header>
+      {view.phase === 'lineup' && <div className="table-now">Have Alert? You can swap initiative with a willing ally. Tell the DM.</div>}
       {active && (
         <div className="table-now">
           Now: <strong>{active.name}</strong>
@@ -85,6 +86,7 @@ export function Table() {
       <ol className="table-list">
         {view.combatants.map((c) => (
           <li key={c.id} ref={c.isActive ? activeRef : undefined} className={[c.isActive && 'active', c.defeated && 'defeated', `k-${c.kind}`].filter(Boolean).join(' ')}>
+            {view.phase === 'lineup' && <span className="t-init">{c.initiative ?? '—'}</span>}
             {c.avatarUrl ? <img src={c.avatarUrl} alt="" className="t-avatar" /> : <span className="t-avatar placeholder">{c.name[0]}</span>}
             <div className="t-main">
               <div className="t-name">

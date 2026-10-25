@@ -10,6 +10,7 @@ export type CombatEventBody =
   | { type: 'combat/created'; name: string; campaign: { id: number; name: string } | null; sourceEncounterId: string | null }
   | { type: 'combat/renamed'; name: string }
   | { type: 'combat/settings'; patch: Partial<CombatSettings> }
+  | { type: 'combat/lineup'; open: boolean }
   | { type: 'combat/started' }
   | { type: 'combat/ended' }
   | { type: 'statblock/added'; key: string; statBlock: MonsterStatBlock }
@@ -18,6 +19,8 @@ export type CombatEventBody =
   | { type: 'combatant/removed'; id: string }
   | { type: 'combatant/updated'; id: string; patch: CombatantPatch }
   | { type: 'initiative/set'; id: string; value: number | null }
+  /** The Alert feat's Initiative Swap: two combatants exchange places in the order. */
+  | { type: 'initiative/swapped'; a: string; b: string }
   | { type: 'hp/damage'; id: string; amount: number }
   | { type: 'hp/heal'; id: string; amount: number }
   | { type: 'hp/temp'; id: string; amount: number }

@@ -64,6 +64,7 @@ export function mergePcSnapshot(summary: PcSnapshot | undefined, sheet: PcSnapsh
     spellSlots: sheet.spellSlots,
     pactSlots: sheet.pactSlots,
     limitedUses: sheet.limitedUses,
+    feats: sheet.feats,
     stats: summary.stats,
   };
 }

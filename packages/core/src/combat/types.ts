@@ -41,6 +41,8 @@ export interface Combatant {
   name: string;
   initiative: number | null;
   initBonus: number;
+  /** Set by an Alert swap so two tied combatants really trade places; checked right after initiative. */
+  tiebreak?: number;
   /** Secondary tiebreak (dex score), then insertion order. */
   dex?: number;
   ac: number | null;
@@ -92,6 +94,8 @@ export interface CombatState {
   sourceEncounterId: string | null;
   combatants: Record<string, Combatant>;
   started: boolean;
+  /** Not started yet, but the table view shows the players their initiative order (Alert swaps). */
+  lineup: boolean;
   round: number;
   activeId: string | null;
   prompts: CombatPrompt[];

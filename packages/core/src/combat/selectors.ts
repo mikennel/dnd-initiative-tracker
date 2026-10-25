@@ -44,11 +44,21 @@ export interface PlayerViewCombatant {
   conditions: string[];
   concentrating: boolean;
   defeated: boolean;
+  /** Only during the lineup, so players can decide on Alert swaps. */
+  initiative?: number | null;
+}
+
+/** setup: DM is preparing · lineup: players see their order · active: combat running. */
+export type CombatPhase = 'setup' | 'lineup' | 'active';
+
+export function combatPhase(state: Pick<CombatState, 'started' | 'lineup'>): CombatPhase {
+  return state.started ? 'active' : state.lineup ? 'lineup' : 'setup';
 }
 
 export interface PlayerView {
   name: string;
   started: boolean;
+  phase: CombatPhase;
   round: number;
   combatants: PlayerViewCombatant[];
 }
@@ -58,8 +68,11 @@ export interface PlayerView {
  * (notes, stat blocks, resources, prompts, hidden combatants) never leaves the server.
  */
 export function playerView(state: CombatState, pcLive: Record<number, PcSnapshot | undefined> = {}): PlayerView {
+  const phase = combatPhase(state);
   const combatants = turnOrder(state)
     .filter((c) => !c.hidden)
+    // Before combat starts the players only see each other; enemies appear on "Start combat".
+    .filter((c) => phase === 'active' || c.kind === 'pc')
     .map((c): PlayerViewCombatant => {
       const hp = effectiveHp(c, pcLive);
       const snap = c.source?.ddbCharacterId !== undefined ? pcLive[c.source.ddbCharacterId] : undefined;
@@ -77,9 +90,10 @@ export function playerView(state: CombatState, pcLive: Record<number, PcSnapshot
         concentrating: !!c.concentration,
         defeated: c.defeated,
       };
+      if (phase === 'lineup') v.initiative = c.initiative;
       if (c.kind === 'pc' && hp) v.hp = hp;
       else if ((c.kind === 'monster' || c.kind === 'npc') && hp && state.settings.showMonsterHealth) v.health = healthDescriptor(hp);
       return v;
     });
-  return { name: state.name, started: state.started, round: state.round, combatants };
+  return { name: state.name, started: state.started, phase, round: state.round, combatants };
 }

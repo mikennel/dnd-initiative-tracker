@@ -1,4 +1,4 @@
-import { effectiveInitBonus, rollD20, turnOrder, type CombatEventBody } from '@dnd/core';
+import { combatPhase, effectiveInitBonus, rollD20, turnOrder, type CombatEventBody, type Combatant, type PcSnapshot } from '@dnd/core';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { AddCombatant } from '../components/AddCombatant.tsx';
@@ -35,7 +35,13 @@ function Tracker() {
   const focusId = selectedId && state.combatants[selectedId] ? selectedId : state.activeId;
   const focus = focusId ? state.combatants[focusId] : undefined;
 
+  const phase = combatPhase(state);
   const next = useCallback(() => dispatch({ type: 'turn/next' }), [dispatch]);
+  /** The big button: setup → show the players their order → start combat → next turn. */
+  const advance = useCallback(
+    () => (phase === 'setup' ? dispatch({ type: 'combat/lineup', open: true }) : next()),
+    [phase, dispatch, next],
+  );
   const prev = useCallback(() => dispatch({ type: 'turn/prev' }), [dispatch]);
 
   // Keyboard: N / Space = next turn, P = previous, Ctrl+Z / Ctrl+Y = undo / redo.
@@ -51,7 +57,7 @@ function Tracker() {
         dispatch({ type: 'redo' });
       } else if (e.key === 'n' || e.key === ' ') {
         e.preventDefault();
-        next();
+        advance();
       } else if (e.key === 'p') {
         prev();
       } else if (e.key === 'Escape') {
@@ -61,7 +67,7 @@ function Tracker() {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [dispatch, next, prev]);
+  }, [dispatch, advance, prev]);
 
   // Keep the active combatant scrolled into view.
   useEffect(() => {
@@ -136,7 +142,7 @@ function Tracker() {
               Round <strong>{state.round}</strong>
             </>
           ) : (
-            <span className="muted">Not started</span>
+            <span className="muted">{phase === 'lineup' ? 'Lineup' : 'Not started'}</span>
           )}
         </div>
         <span className="row muted" title={pendingCount ? `${pendingCount} change(s) not yet saved on the server; they are kept in this browser` : 'All changes saved'}>
@@ -146,9 +152,19 @@ function Tracker() {
       </header>
 
       <div className="toolbar">
-        <button className="primary big" onClick={next} disabled={order.length === 0} title="Next turn (N or Space)">
-          {state.started ? 'Next turn ▶' : 'Start combat ▶'}
+        <button className="primary big" onClick={advance} disabled={order.length === 0} title={{ setup: 'Show the players their initiative order on the table view (N)', lineup: 'Start combat: enemies appear on the table view (N)', active: 'Next turn (N or Space)' }[phase]}>
+          {{ setup: 'Show order to players ▶', lineup: 'Start combat ▶', active: 'Next turn ▶' }[phase]}
         </button>
+        {phase === 'setup' && order.length > 0 && (
+          <button className="ghost" onClick={next} title="Start combat without showing the players their order first">
+            Skip lineup
+          </button>
+        )}
+        {phase === 'lineup' && (
+          <button className="ghost" onClick={() => dispatch({ type: 'combat/lineup', open: false })}>
+            ◀ Back to setup
+          </button>
+        )}
         <button onClick={prev} disabled={!state.started} title="Previous turn (P)">
           ◀ Prev
         </button>
@@ -185,9 +201,10 @@ function Tracker() {
 
       <div className="tracker-banners">
         <DdbStatusBanner status={status?.ddb} />
-        {!state.started && unrolled.some((c) => c.kind === 'pc') && order.length > 0 && (
-          <div className="banner">Enter the players' initiative rolls (or roll for them), roll for monsters, then start combat.</div>
+        {phase === 'setup' && unrolled.some((c) => c.kind === 'pc') && order.length > 0 && (
+          <div className="banner">Enter the players' initiative rolls (or roll for them) and roll for monsters, then show the players their order.</div>
         )}
+        {phase === 'lineup' && <Lineup order={order} pcLive={pcLive} dispatch={dispatch} />}
         <Prompts state={state} dispatch={dispatch} />
       </div>
 
@@ -295,4 +312,59 @@ function MultiHp({ ids, dispatch }: { ids: string[]; dispatch: (...e: CombatEven
     dispatch({ type: 'batch', label: `Apply to ${ids.length}`, events: all });
   };
   return <HpInput id="multi" dispatch={fanOut} />;
+}
+
+/**
+ * Between setup and combat: the table view shows the players their order (and nothing else),
+ * and anyone with Alert can swap initiative with a willing ally.
+ */
+function Lineup({ order, pcLive, dispatch }: { order: Combatant[]; pcLive: Record<number, PcSnapshot>; dispatch: (...e: CombatEventBody[]) => void }) {
+  const [from, setFrom] = useState<string | null>(null);
+  const pcs = order.filter((c) => c.kind === 'pc');
+  const snapOf = (c: Combatant) => (c.source?.ddbCharacterId !== undefined ? pcLive[c.source.ddbCharacterId] : undefined);
+  const fromName = pcs.find((c) => c.id === from)?.name;
+  const unrolled = pcs.filter((c) => c.initiative === null);
+  return (
+    <section className="card stack lineup" aria-label="Player initiative order">
+      <div className="row">
+        <strong className="grow">The table shows the players their order. Swap anyone with Alert, then start combat.</strong>
+        {from && (
+          <button className="small ghost" onClick={() => setFrom(null)}>
+            Cancel swap
+          </button>
+        )}
+      </div>
+      {unrolled.length > 0 && <div className="banner bad">No initiative yet for {unrolled.map((c) => c.name).join(', ')}.</div>}
+      <ol className="list lineup-list">
+        {pcs.map((c) => {
+          const alert = snapOf(c)?.feats?.includes('Alert');
+          return (
+            <li key={c.id} className={from === c.id ? 'swapping' : undefined}>
+              <span className="lineup-init">{c.initiative ?? '—'}</span>
+              <span className="grow">
+                <strong>{c.name}</strong> {alert && <span className="chip" title="Has the Alert feat: may swap initiative with a willing ally">Alert</span>}
+              </span>
+              {!from && (
+                <button className="small" onClick={() => setFrom(c.id)}>
+                  Swap…
+                </button>
+              )}
+              {from && from !== c.id && (
+                <button
+                  className="small primary"
+                  onClick={() => {
+                    dispatch({ type: 'initiative/swapped', a: from, b: c.id });
+                    setFrom(null);
+                  }}
+                >
+                  Swap with {fromName}
+                </button>
+              )}
+              {from === c.id && <small className="muted">Pick who to swap with</small>}
+            </li>
+          );
+        })}
+      </ol>
+    </section>
+  );
 }

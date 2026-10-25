@@ -44,6 +44,7 @@
 - [x] Rename and re-picture any combatant (upload, paste or URL; resized to a 128 px JPEG inside the event). The original creature type shows next to a custom name, DM side only
 - [x] Row buttons to hide/reveal and remove; multi-select Hide/Reveal, Remove and HP ×1.5/×2
 - [x] Custom creature tab defaults to Enemy and can add hidden
+- [x] Lineup phase between setup and combat: players see only their own order on the table, Alert swaps (feat detected from the sheet), then Start combat reveals enemies
 - [x] Dropped the "DDB · Ns ago" sync label from tracker rows (still in the PC panel)
 
 ## Later

@@ -108,6 +108,7 @@ export function mapCharacter(c: DdbCharacter, cfg: DdbConfig, fetchedAt = Date.n
     spellSlots: toSlots(slotMax, c.spellSlots),
     pactSlots: toSlots(pactMax, c.pactMagic),
     limitedUses,
+    feats: [...new Set((c.feats ?? []).map((f) => f.definition?.name).filter((n): n is string => !!n))],
     avatarUrl: c.decorations?.avatarUrl ?? c.avatarUrl ?? null,
     fetchedAt,
   };

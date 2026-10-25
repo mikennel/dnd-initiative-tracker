@@ -121,6 +121,7 @@ const character: DdbCharacter = {
   deathSaves: { failCount: 0, successCount: 1, isStabilized: false },
   spellSlots: [{ level: 1, used: 1, available: 0 }, { level: 2, used: 2, available: 0 }],
   actions: { class: [{ name: 'Lay On Hands', limitedUse: { maxUses: 1, numberUsed: 0 } }, { name: 'Smite', limitedUse: null }] },
+  feats: [{ definition: { name: 'Tough' } }, { definition: { name: 'Alert' } }, { definition: null }],
 };
 
 describe('mapCharacter', () => {
@@ -148,6 +149,7 @@ describe('mapCharacter', () => {
     expect(snap.deathSaves).toEqual({ fail: 0, success: 1, stable: false });
     expect(snap.spellSlots[0]).toEqual({ level: 1, max: 4, used: 1 });
     expect(snap.limitedUses).toEqual([{ name: 'Lay On Hands', max: 1, used: 0 }]);
+    expect(snap.feats).toEqual(['Tough', 'Alert']);
     expect(snap.level).toBe(9);
   });
 });
@@ -209,6 +211,7 @@ describe('mapCharacterSummary', () => {
     expect(merged.conditions).toEqual([{ name: 'Exhaustion', level: 1 }, { name: 'Restrained' }]); // newer summary wins
     expect(merged.spellSlots[0]).toEqual({ level: 1, max: 4, used: 1 });
     expect(merged.limitedUses).toEqual([{ name: 'Lay On Hands', max: 1, used: 0 }]);
+    expect(merged.feats).toContain('Alert');
     expect(mergePcSnapshot(undefined, sheet)).toBe(sheet);
   });
 });

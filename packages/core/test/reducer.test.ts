@@ -229,6 +229,7 @@ describe('player view', () => {
       add('m', { initiative: 10, hp: { current: 9, max: 20, temp: 0 }, notes: 'secret' }),
       add('h', { initiative: 12, hidden: true }),
       add('pc', { initiative: 14, kind: 'pc', hp: null, source: { ddbCharacterId: 7 } }),
+      { type: 'combat/started' },
     );
     const view = playerView(state, {
       7: { characterId: 7, name: 'PC', level: 3, hp: { current: 10, max: 30, temp: 2 }, conditions: [{ name: 'Poisoned' }], deathSaves: { fail: 0, success: 0, stable: false }, spellSlots: [], pactSlots: [], limitedUses: [], avatarUrl: null, fetchedAt: 0 },
@@ -238,5 +239,52 @@ describe('player view', () => {
     expect(view.combatants[1]).toMatchObject({ health: 'Bloodied' });
     expect(view.combatants[1]).not.toHaveProperty('hp');
     expect(JSON.stringify(view)).not.toContain('secret');
+  });
+});
+
+describe('lineup and Alert swaps', () => {
+  const party = [
+    add('a', { kind: 'pc', initiative: 18, hp: null }),
+    add('b', { kind: 'pc', initiative: 9, hp: null }),
+    add('m', { initiative: 15 }),
+    add('n', { kind: 'npc', initiative: 12 }),
+  ];
+
+  it('shows only players before combat starts, with initiative during the lineup', () => {
+    const setup = run(...party).state;
+    expect(playerView(setup)).toMatchObject({ phase: 'setup', combatants: [{ id: 'a' }, { id: 'b' }] });
+    expect(playerView(setup).combatants[0]).not.toHaveProperty('initiative');
+
+    const lineup = run(...party, { type: 'combat/lineup', open: true }).state;
+    const view = playerView(lineup);
+    expect(view.phase).toBe('lineup');
+    expect(view.combatants.map((c) => [c.id, c.initiative])).toEqual([['a', 18], ['b', 9]]);
+
+    const started = run(...party, { type: 'combat/lineup', open: true }, { type: 'combat/started' }).state;
+    expect(started.lineup).toBe(false);
+    expect(playerView(started).combatants.map((c) => c.id)).toEqual(['a', 'm', 'n', 'b']);
+  });
+
+  it('swaps initiative between two combatants', () => {
+    const { state } = run(...party, { type: 'combat/lineup', open: true }, { type: 'initiative/swapped', a: 'b', b: 'a' });
+    expect(turnOrder(state).map((c) => c.id)).toEqual(['b', 'm', 'n', 'a']);
+    expect(state.log.at(-1)?.text).toMatch(/swapped initiative/);
+  });
+
+  it('really trades places on a tied roll, and a new roll clears that', () => {
+    const tied = [add('a', { kind: 'pc', initiative: 14, hp: null }), add('b', { kind: 'pc', initiative: 14, hp: null })];
+    expect(turnOrder(run(...tied).state).map((c) => c.id)).toEqual(['a', 'b']);
+    const swapped = run(...tied, { type: 'initiative/swapped', a: 'a', b: 'b' }).state;
+    expect(turnOrder(swapped).map((c) => c.id)).toEqual(['b', 'a']);
+    const swappedBack = run(...tied, { type: 'initiative/swapped', a: 'a', b: 'b' }, { type: 'initiative/swapped', a: 'a', b: 'b' }).state;
+    expect(turnOrder(swappedBack).map((c) => c.id)).toEqual(['a', 'b']);
+    const rerolled = run(...tied, { type: 'initiative/swapped', a: 'a', b: 'b' }, { type: 'initiative/set', id: 'b', value: 14 }).state;
+    expect(turnOrder(rerolled).map((c) => c.id)).toEqual(['a', 'b']);
+  });
+
+  it('is undoable like everything else', () => {
+    const { state } = run(...party, { type: 'combat/lineup', open: true }, { type: 'initiative/swapped', a: 'a', b: 'b' }, { type: 'undo' });
+    expect(turnOrder(state).map((c) => c.id)).toEqual(['a', 'm', 'n', 'b']);
+    expect(state.lineup).toBe(true);
   });
 });

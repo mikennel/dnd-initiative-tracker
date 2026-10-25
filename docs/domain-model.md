@@ -85,3 +85,16 @@ Live PC state from DDB (ADR 0003), built by `mapCharacterSummary` (scds) and `ma
 - `stats` (scds only, optional): `ac`, `initBonus`, `proficiencyBonus`, `passive{perception,
   insight, investigation}`, `saves{str..cha}`, `spellcasting[]{dc, attack, sources}`, `speeds`,
   `senses`, `resistances`, `immunities`, `vulnerabilities`, `classes`, `race`, `inspiration`.
+
+## Combat phases
+`combatPhase(state)` (`selectors.ts`): **setup** → **lineup** → **active**.
+- **setup**: the DM builds the fight and rolls. `/table` shows only the players, without numbers.
+- **lineup** (`state.lineup`, `combat/lineup {open}`): `/table` shows the players in initiative
+  order with their numbers, so anyone with **Alert** (flagged from `PcSnapshot.feats`) can
+  swap. Enemies are still hidden from the table.
+- **active** (`state.started`): the full tracker. `combat/started` clears `lineup`.
+  "Skip lineup" goes straight from setup to active.
+
+`initiative/swapped {a, b}` exchanges two initiative values (the Alert feat's Initiative Swap).
+On a tied roll that would change nothing, so the one that was second gets `tiebreak: 1`.
+`compareInitiative` checks `tiebreak` right after initiative, and `initiative/set` clears it.

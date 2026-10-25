@@ -5,6 +5,9 @@ export function compareInitiative(a: Combatant, b: Combatant): number {
   const ai = a.initiative ?? -Infinity;
   const bi = b.initiative ?? -Infinity;
   if (ai !== bi) return bi - ai;
+  const at = a.tiebreak ?? 0;
+  const bt = b.tiebreak ?? 0;
+  if (at !== bt) return bt - at;
   if (a.initBonus !== b.initBonus) return b.initBonus - a.initBonus;
   const ad = a.dex ?? 0;
   const bd = b.dex ?? 0;
