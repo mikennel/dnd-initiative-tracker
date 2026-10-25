@@ -4,6 +4,7 @@ import fastifyStatic from '@fastify/static';
 import fastifyWebsocket from '@fastify/websocket';
 import Fastify, { type FastifyInstance } from 'fastify';
 import { DdbClient, type SecretStore } from './ddb/client.ts';
+import { firefoxCobaltSessions } from './ddb/firefoxCookies.ts';
 import { Hub } from './hub.ts';
 import { registerRoutes } from './routes.ts';
 import { FileSecretStore } from './secrets.ts';
@@ -20,6 +21,8 @@ export interface AppOptions {
   pollIntervalMs?: number;
   staticDir?: string;
   logger?: boolean;
+  /** Where to look for a Firefox D&D Beyond login. Tests inject a fake. */
+  firefoxCookies?: () => string[];
 }
 
 export interface AppContext {
@@ -31,6 +34,7 @@ export interface AppContext {
   hub: Hub;
   poller: PcPoller;
   lanUrls: string[];
+  firefoxCookies: () => string[];
 }
 
 export async function buildApp(opts: AppOptions): Promise<AppContext> {
@@ -44,7 +48,7 @@ export async function buildApp(opts: AppOptions): Promise<AppContext> {
   const hub = new Hub(store, kv, (ids) => poller.get(ids), () => void poller.tick());
   poller = new PcPoller(ddb, kv, () => hub.watchedCharacterIds(), (snaps, changed) => hub.pcUpdated(snaps, changed), opts.pollIntervalMs);
 
-  const ctx: AppContext = { app, db, kv, store, ddb, hub, poller, lanUrls: [] };
+  const ctx: AppContext = { app, db, kv, store, ddb, hub, poller, lanUrls: [], firefoxCookies: opts.firefoxCookies ?? (() => firefoxCobaltSessions()) };
 
   await app.register(fastifyWebsocket);
   app.get('/ws', { websocket: true }, (socket) => hub.attach(socket));

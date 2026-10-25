@@ -42,6 +42,7 @@ export const api = {
   status: () => req<{ ddb: DdbStatus; ddbError: string | null; tableCombatId: string | null; lanUrls: string[] }>('GET', '/api/status'),
   setCookie: (cobaltSession: string) => req<{ ddb: DdbStatus }>('PUT', '/api/settings/ddb', { cobaltSession }),
   clearCookie: () => req<{ ddb: DdbStatus }>('DELETE', '/api/settings/ddb'),
+  connectFirefox: () => req<{ ddb: DdbStatus }>('POST', '/api/settings/ddb/firefox'),
 
   campaigns: () => req<{ id: number; name: string; dmUsername: string }[]>('GET', '/api/ddb/campaigns'),
   campaignCharacters: (id: number) => req<{ id: number; name: string; userName: string; avatarUrl: string | null }[]>('GET', `/api/ddb/campaigns/${id}/characters`),

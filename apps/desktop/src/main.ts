@@ -87,7 +87,7 @@ function buildMenu(): Menu {
       { label: 'Copy Table Link for Other Devices', click: () => clipboard.writeText(tableUrl()) },
       { type: 'separator' },
       { label: 'Open Data Folder', click: () => void shell.openPath(dataDir) },
-      { label: 'Show Chrome Extension Folder', click: () => void shell.openPath(extensionDir) },
+      { label: 'Show Browser Extension Folder', click: () => void shell.openPath(extensionDir) },
       { type: 'separator' },
       process.platform === 'darwin' ? { role: 'close' } : { role: 'quit' },
     ],

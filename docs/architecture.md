@@ -31,7 +31,8 @@
 | `apps/server/src/ws.ts` | WebSocket hub: DM channel (full state + events) and table channel (`playerView` only) |
 | `apps/server/src/start.ts` | `startServer()`: build, listen (with port fallback), start polling. Used by the CLI (`index.ts`) and the desktop app |
 | `apps/desktop` | Electron shell (ADR 0006): runs `startServer()` in the main process, opens the SPA, `/table` links open in a second window, external links go to the default browser |
-| `apps/extension` | Chrome MV3 connector (ADR 0006): reads the `CobaltSession` cookie and hands it to the Settings page on localhost |
+| `apps/extension` | Chrome/Firefox MV3 connector (ADR 0006): reads the `CobaltSession` cookie and hands it to the Settings page on localhost |
+| `apps/server/src/ddb/firefoxCookies.ts` | Reads `CobaltSession` from the local Firefox profiles' `cookies.sqlite` (ADR 0007) |
 | `apps/web/src/lib/combatClient.ts` | Client sync engine: server events + local pending queue (IndexedDB) → `materialize` |
 
 ## Data flow for one DM action
@@ -56,6 +57,7 @@ View        = combine(CombatState, PcLive) // what the UI renders; playerView() 
 | Route | Purpose |
 |---|---|
 | `GET /api/status` | DDB connection status (`unconfigured`, `ok`, `auth-failed`, `unreachable`), the table's combat id, LAN URLs |
+| `POST /api/settings/ddb/firefox` | Connect using the D&D Beyond login in this computer's Firefox (ADR 0007). Loopback only |
 | `PUT /api/settings/ddb` `{cobaltSession}` / `DELETE` | Store the cookie after verifying it mints a token, or forget it. **Loopback only**: the server listens on the LAN for `/table`, but other devices get 403 here |
 | `GET /api/ddb/campaigns`, `/campaigns/:id/characters` | Campaign list and roster |
 | `GET /api/ddb/encounters?skip&take`, `/encounters/:id` | DDB encounters (raw) |

@@ -72,6 +72,19 @@ export function Settings() {
     }
   };
 
+  const connectFirefox = async () => {
+    setBusy(true);
+    setMessage(null);
+    try {
+      await api.connectFirefox();
+      setMessage({ ok: true, text: 'Connected to D&D Beyond using your Firefox login.' });
+    } catch (err) {
+      setMessage({ ok: false, text: (err as Error).message });
+    } finally {
+      setBusy(false);
+    }
+  };
+
   // The desktop app opens /settings?connect=1 in Chrome; start straight away there.
   useEffect(() => {
     if (params.get('connect') === '1' && connector && !inElectron) void connectWithChrome();
@@ -111,22 +124,23 @@ export function Settings() {
           The tracker reads your encounters, monsters and your players' character sheets using your D&D Beyond login. It only ever
           reads; it never changes anything on D&D Beyond. The login stays on this computer.
         </p>
+        <div className="row">
+          <button className="primary" disabled={busy} onClick={connectFirefox}>
+            Use my Firefox login
+          </button>
+          <small className="muted">Reads the D&D Beyond login from Firefox on this computer. Log in at dndbeyond.com in Firefox first.</small>
+        </div>
         {inElectron ? (
-          <div className="stack">
-            <div className="row">
-              <button className="primary" onClick={() => window.open(`${location.origin}/settings?connect=1`)}>
-                Connect with Chrome
-              </button>
-              <small className="muted">Opens Chrome, where you log in to D&D Beyond as usual (Google, Apple, anything).</small>
-            </div>
-            <small className="muted">
-              Needs the tracker's Chrome extension, installed once: File → Show Chrome Extension Folder, then follow the README there.
-            </small>
+          <div className="row">
+            <button disabled={busy} onClick={() => window.open(`${location.origin}/settings?connect=1`)}>
+              Connect with Chrome
+            </button>
+            <small className="muted">Opens Chrome; needs the tracker's extension (File → Show Browser Extension Folder).</small>
           </div>
         ) : connector ? (
           <div className="row">
-            <button className="primary" disabled={busy} onClick={connectWithChrome}>
-              {busy ? 'Waiting for D&D Beyond…' : 'Connect with Chrome'}
+            <button disabled={busy} onClick={connectWithChrome}>
+              {busy ? 'Waiting for D&D Beyond…' : 'Connect with this browser'}
             </button>
             {busy && (
               <button className="small ghost" onClick={() => abort.current?.abort()}>
@@ -135,10 +149,10 @@ export function Settings() {
             )}
           </div>
         ) : (
-          <p className="muted" style={{ margin: 0 }}>
-            For one-click connecting, install the tracker's Chrome extension (<code>apps/extension</code>, see its README) and reload
-            this page. Or paste the cookie by hand below.
-          </p>
+          <small className="muted">
+            Using Chrome? Install the tracker's browser extension (<code>apps/extension</code>, see its README) and reload this page
+            for one-click connecting.
+          </small>
         )}
         <details>
           <summary className="muted">Paste the cookie by hand instead</summary>

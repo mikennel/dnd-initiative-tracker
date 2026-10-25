@@ -35,6 +35,7 @@
 - [ ] Measure how quickly scds reflects a sheet edit (needs a player to change something)
 - [x] Electron desktop app (Windows installer built locally; macOS via GitHub Actions), ADR 0006
 - [x] Chrome connector extension: one-click D&D Beyond login handoff, works with Google sign-in
+- [x] Firefox: read the login straight from the profile (no extension); extension also runs in Firefox (ADR 0007)
 - [ ] App icon
 - [ ] Auto-update from GitHub Releases
 

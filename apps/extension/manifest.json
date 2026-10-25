@@ -3,9 +3,18 @@
   "name": "DnD Initiative Tracker: D&D Beyond connector",
   "version": "0.1.0",
   "description": "Hands your D&D Beyond login to the DnD Initiative Tracker running on this computer, so you don't have to copy cookies by hand.",
-  "permissions": ["cookies"],
-  "host_permissions": ["https://www.dndbeyond.com/*"],
-  "background": { "service_worker": "background.js" },
+  "permissions": [
+    "cookies"
+  ],
+  "host_permissions": [
+    "https://www.dndbeyond.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "scripts": [
+      "background.js"
+    ]
+  },
   "content_scripts": [
     {
       "matches": [
@@ -18,8 +27,21 @@
         "http://127.0.0.1:5176/*",
         "http://127.0.0.1:5177/*"
       ],
-      "js": ["connect.js"],
+      "js": [
+        "connect.js"
+      ],
       "run_at": "document_start"
     }
-  ]
+  ],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "dnd-tracker-connector@mikennel.github.io",
+      "strict_min_version": "128.0",
+      "data_collection_permissions": {
+        "required": [
+          "authenticationInfo"
+        ]
+      }
+    }
+  }
 }

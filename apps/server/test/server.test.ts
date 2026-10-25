@@ -54,9 +54,9 @@ afterEach(async () => {
   ctx = undefined;
 });
 
-async function setup(cookie?: string) {
+async function setup(cookie?: string, firefox: string[] = []) {
   const ddb = fakeDdb();
-  ctx = await buildApp({ dataDir: '.', dbPath: ':memory:', secrets: new MemorySecretStore(cookie), fetchImpl: ddb.impl });
+  ctx = await buildApp({ dataDir: '.', dbPath: ':memory:', secrets: new MemorySecretStore(cookie), fetchImpl: ddb.impl, firefoxCookies: () => firefox });
   ctx.kv.set('ddb:config', { at: Date.now(), config: configJson });
   return { ctx, ddb };
 }
@@ -91,6 +91,21 @@ describe('API', () => {
     expect(lan.statusCode).toBe(403);
     expect((await ctx.app.inject({ method: 'DELETE', url: '/api/settings/ddb', remoteAddress: '192.168.1.20' })).statusCode).toBe(403);
     expect((await ctx.app.inject({ url: '/api/status', remoteAddress: '192.168.1.20' })).json().ddb).toBe('unconfigured');
+  });
+
+  it('connects with the first Firefox login that DDB accepts', async () => {
+    const { ctx } = await setup(undefined, ['stale-cookie', 'good-cookie']);
+    const res = await ctx.app.inject({ method: 'POST', url: '/api/settings/ddb/firefox' });
+    expect(res.json()).toEqual({ ddb: 'ok' });
+    const lan = await ctx.app.inject({ method: 'POST', url: '/api/settings/ddb/firefox', remoteAddress: '10.0.0.9' });
+    expect(lan.statusCode).toBe(403);
+  });
+
+  it('explains when Firefox has no D&D Beyond login', async () => {
+    const { ctx } = await setup();
+    const res = await ctx.app.inject({ method: 'POST', url: '/api/settings/ddb/firefox' });
+    expect(res.statusCode).toBe(404);
+    expect(res.json().error).toMatch(/Firefox/);
   });
 
   it('imports a DDB encounter into a new event-sourced combat', async () => {

@@ -34,10 +34,14 @@ The desktop app keeps its data in the OS app-data folder (**File → Open Data F
 in `apps/server/data/`. To bring over combats from the npm version, quit the app and copy
 `tracker.db` (and `secrets.json` if you like) into that folder.
 
-## Connecting D&D Beyond with the Chrome extension
-Install `apps/extension` once (see its README: `chrome://extensions` → Developer mode →
-Load unpacked). Then use **Settings → Connect with Chrome**. In the desktop app this opens
-the Settings page in Chrome, where the extension does the work.
+## Connecting D&D Beyond
+- **Firefox:** log in at dndbeyond.com in Firefox, then **Settings → Use my Firefox login**.
+  No extension needed (ADR 0007).
+- **Chrome:** install `apps/extension` once (see its README: `chrome://extensions` →
+  Developer mode → Load unpacked). Then use **Settings → Connect with Chrome**. In the desktop
+  app this opens Settings in Chrome, where the extension does the work.
+- **Anything else:** paste the cookie by hand (Settings, collapsed section).
+- `npx web-ext lint --source-dir apps/extension` checks the extension against Firefox's rules.
 
 ## Scripts
 | Command | What it does |

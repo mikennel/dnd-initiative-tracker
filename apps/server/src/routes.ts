@@ -34,6 +34,25 @@ export function registerRoutes(app: FastifyInstance, ctx: AppContext) {
     return { ddb: ddb.status };
   });
 
+  // Use the login from the user's Firefox on this computer (ADR 0007).
+  app.post('/api/settings/ddb/firefox', { preHandler: localOnly }, async (_req, reply) => {
+    const candidates = ctx.firefoxCookies();
+    if (candidates.length === 0) {
+      return reply.status(404).send({ error: "No D&D Beyond login found in Firefox. Log in at dndbeyond.com in Firefox (tick 'stay signed in'), then try again." });
+    }
+    let last: unknown;
+    for (const value of candidates) {
+      try {
+        await ddb.setSession(value);
+        void poller.tick();
+        return { ddb: ddb.status };
+      } catch (err) {
+        last = err;
+      }
+    }
+    throw last;
+  });
+
   app.delete('/api/settings/ddb', { preHandler: localOnly }, async () => {
     ddb.clearSession();
     return { ddb: ddb.status };
