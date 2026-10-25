@@ -49,6 +49,36 @@ PcLive      = Map<ddbCharacterId, PcSnapshot>  // polled from DDB, not event-sou
 View        = combine(CombatState, PcLive) // what the UI renders; playerView() for /table
 ```
 
+## Server API (`apps/server/src/routes.ts`)
+| Route | Purpose |
+|---|---|
+| `GET /api/status` | DDB connection status (`unconfigured`, `ok`, `auth-failed`, `unreachable`), the table's combat id, LAN URLs |
+| `PUT /api/settings/ddb` `{cobaltSession}` / `DELETE` | Store the cookie after verifying it mints a token, or forget it |
+| `GET /api/ddb/campaigns`, `/campaigns/:id/characters` | Campaign list and roster |
+| `GET /api/ddb/encounters?skip&take`, `/encounters/:id` | DDB encounters (raw) |
+| `GET /api/ddb/monsters?ids=1,2`, `/monsters/search?q&homebrew=1` | Mapped `MonsterStatBlock`s. Cached in SQLite, and search falls back to the cache when offline |
+| `GET /api/ddb/characters/:id` | A `PcSnapshot` |
+| `GET/POST /api/combats`, `POST /api/combats/import` `{encounterId, hp}` | List, create, or import a combat |
+| `GET/POST /api/combats/:id/events` | The event log, plus an HTTP fallback for appending events (dedup by `eventId`) |
+| `PATCH/DELETE /api/combats/:id` | Archive or delete a combat |
+| `PUT /api/table` `{combatId}` | Choose what `/table` shows. By default it follows the combat the DM opened last |
+| `GET/PUT/DELETE /api/encounters/:id` | Locally saved builder encounters (JSON docs) |
+
+### WebSocket `/ws`
+```
+client → server  {t:'subscribe', combatId, role:'dm'|'table'}   // combatId 'current' = follow the DM
+                 {t:'events', combatId, events}                 // dm only
+server → dm      {t:'snapshot', combatId, events, pcLive} · {t:'events', combatId, events}
+                 {t:'ack', combatId, eventIds} · {t:'pcLive', combatId, pcLive} · {t:'error', message}
+server → table   {t:'table', combatId, view: PlayerView}        // projection only (ADR 0005)
+```
+
+## Storage (`apps/server/data/`, gitignored)
+- `tracker.db` is SQLite with tables `combats`, `events` (append-only, `UNIQUE(combat_id, event_id)`),
+  `monster_cache` (raw DDB monsters, 7-day TTL), `kv` (DDB config cache, last PC snapshots,
+  table combat) and `encounters`. Migrations live in `store/db.ts`, versioned by `PRAGMA user_version`.
+- `secrets.json` holds the `CobaltSession` cookie. `DDB_COBALT_SESSION` can be set as an env var instead.
+
 ## Further reading
 - [Domain model](domain-model.md)
 - [DDB API notes](ddb-api.md)

@@ -10,7 +10,7 @@
 ## Phase 1: Core and server foundation
 - [x] Core domain types, events, reducer, `materialize` with undo/redo
 - [x] DDB mappers and stat block parser
-- [ ] Server: DDB client, SQLite event store, WebSocket hub, settings
+- [x] Server: DDB client, SQLite event store, WebSocket hub, settings
 
 ## Phase 2: DM tracker (MVP)
 - [ ] Import a DDB encounter (URL, id, or pick from list)
