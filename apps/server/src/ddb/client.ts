@@ -222,7 +222,9 @@ export class DdbClient {
       try {
         for (let i = 0; i < stale.length; i += 50) {
           const chunk = stale.slice(i, i + 50);
-          const res = await this.get<{ data: DdbMonster[] }>(`${MONSTERS}?ids=${chunk.join(',')}`);
+          // DDB wants the parameter repeated (ids=1&ids=2); a comma list is a 400.
+          const query = new URLSearchParams(chunk.map((id): [string, string] => ['ids', String(id)]));
+          const res = await this.get<{ data: DdbMonster[] }>(`${MONSTERS}?${query}`);
           for (const m of res.data) {
             raw[m.id] = m;
             this.cacheMonster(m);

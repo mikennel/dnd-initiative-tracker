@@ -71,7 +71,7 @@ save that loses state when it crashes. We never write it.
 ### Monsters
 | Request | Returns |
 |---|---|
-| `GET https://monster-service.dndbeyond.com/v1/Monster?ids=1,2,3` | `{data: Monster[]}` |
+| `GET https://monster-service.dndbeyond.com/v1/Monster?ids=1&ids=2&ids=3` | `{data: Monster[]}`. The parameter must be **repeated**; `ids=1,2,3` returns 400 ("The value '1,2' is not valid"). A single id works either way, which hid this at first. Homebrew ids work without `showHomebrew` |
 | `GET https://monster-service.dndbeyond.com/v1/Monster?search=beholder&skip=0&take=20` | Search, including both legacy (2014) and 2024 versions (`isLegacy`) |
 | `GET .../v1/Monster?skip=0&take=20&showHomebrew=t&homebrewOnly=true` | The user's homebrew monsters (`isHomebrew: true`) |
 

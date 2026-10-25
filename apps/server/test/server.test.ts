@@ -37,7 +37,11 @@ function fakeDdb(opts: { validCookie?: string } = {}) {
     const cookie = String((init?.headers as Record<string, string>)?.Cookie ?? '');
     if (url.includes('auth-service')) return cookie === `CobaltSession=${valid}` ? json({ token: 'tok', ttl: 300 }) : json({}, 401);
     if (url.includes('encounter-service')) return json({ data: encounter });
-    if (url.includes('monster-service')) return json({ data: [beholder2024], pagination: { total: 1 } });
+    if (url.includes('monster-service')) {
+      // Like the real service: a comma-separated ids list is a validation error.
+      if (/[?&]ids=[^&]*,/.test(url)) return json({ errors: { Ids: ['not valid'] } }, 400);
+      return json({ data: [beholder2024], pagination: { total: 1 } });
+    }
     if (url.includes('character-service-scds')) {
       const ids = (JSON.parse(String(init?.body)) as { characterIds: number[] }).characterIds;
       return json({ foundCharacters: ids.filter((id) => id === 1001).map(() => heroSummary), queuedIds: ids.filter((id) => id !== 1001), notFoundIds: [] });
@@ -137,6 +141,14 @@ describe('API', () => {
     // 2002 wasn't in the summary and its sheet 404s, so there is nothing to show yet.
     expect(snap[2002]).toBeUndefined();
     expect(ctx.poller.errors.get(2002)).toMatch(/404/);
+  });
+
+  it('fetches several uncached monsters in one request with repeated ids params', async () => {
+    const { ctx, ddb } = await setup('good-cookie');
+    const res = await ctx.app.inject({ url: '/api/ddb/monsters?ids=5194923,909508' });
+    expect(res.statusCode).toBe(200);
+    const call = ddb.calls.find((c) => c.url.includes('monster-service'))!;
+    expect(new URL(call.url).searchParams.getAll('ids')).toEqual(['5194923', '909508']);
   });
 
   it('accepts events over HTTP and dedups retries', async () => {
