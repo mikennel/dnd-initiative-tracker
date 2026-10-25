@@ -8,8 +8,8 @@
 - [ ] Game-log websocket for live sheet updates (polling is used meanwhile)
 
 ## Phase 1: Core and server foundation
-- [ ] Core domain types, events, reducer, `materialize` with undo/redo
-- [ ] DDB mappers and stat block parser
+- [x] Core domain types, events, reducer, `materialize` with undo/redo
+- [x] DDB mappers and stat block parser
 - [ ] Server: DDB client, SQLite event store, WebSocket hub, settings
 
 ## Phase 2: DM tracker (MVP)
