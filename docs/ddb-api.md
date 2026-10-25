@@ -124,12 +124,44 @@ Other useful fields: `conditions[]{id, level}`, `deathSaves{failCount, successCo
 `floor|ceil(level / multiClassSpellSlotDivisor)` (rounding 1 = down, 2 = up) and index
 `config.multiClassSpellSlots[casterLevel]`), `pactMagic[]`, `actions.{class,race,feat}[].limitedUse{maxUses, numberUsed}`.
 
-`POST https://character-service-scds.dndbeyond.com/v2/characters` is a batch endpoint the
-tracker uses (seen in network). It isn't characterized yet and can't be called from page
-context because of CORS. Investigate it if polling many characters gets slow.
+### Character summaries (batch, precomputed): `scds`
+`POST https://character-service-scds.dndbeyond.com/v2/characters` with `Authorization: Bearer <token>`
+and body `{"characterIds": [..]}`. DDB's own combat tracker uses this to show PCs. It is a
+**read-only query**; the POST carries the id list and changes nothing. It is callable from a
+`www.dndbeyond.com` page. Verified 2026-10-25 with 7 campaign characters in one request:
+```
+{ foundCharacters[], queuedIds[], notFoundIds[] }
+foundCharacters[]: characterId, name, level, userId, isAssignedToPlayer,
+  armorClass (total), initiativeBonus, initiativeScore (10 + bonus),
+  passivePerception, passiveInsight, passiveInvestigation, proficiencyBonus,
+  hitPointInfo{ maximum, current, temp, removedHp, baseTotalHp, override },
+  conditions[]{ name, level }        ← names, not ids; Exhaustion carries a level
+  deathSaveInfo{ failCount, successCount },
+  castingInfo{ saveDcs[]{value, sources[]}, spellAttacks[], modifiers[] },
+  abilities, skills, senses, speeds, resistances, immunities, vulnerabilities,
+  classes, race, attacks, attunedItems, inspiration, currentXp, decorations (avatar)
+```
+Everything here is already computed by DDB (AC, initiative and max HP include items,
+feats and class features), so we don't have to re-implement the rules engine. Taldum's
+`hitPointInfo` (55/110) matched our own v5-derived calculation. Spell slots and limited-use
+actions are **not** included; they still need the v5 sheet. `queuedIds` suggests a cache
+that is recomputed on demand. How quickly it reflects a sheet edit is **not yet measured**.
 
-### Live updates (unverified)
-The encounter bundle references a "game log". DDB runs a campaign websocket
-(`game-log-api-live.dndbeyond.com`) that is reported to broadcast character-sheet
-changes. **Not yet verified.** The app polls the character service instead
-(`apps/server/src/sync/pcPoller.ts`, default 6 s), which is cheap for about 6 PCs.
+### Live updates: game log (verified, but carries no sheet changes)
+DDB's "game log" is a campaign message broker:
+- Socket: `wss://game-log-api-live.dndbeyond.com/v1?gameId=<campaignId>&userId=<userId>&stt=<cobalt token>`.
+  `userId` is the `nameidentifier` claim in the token JWT. The client sends `ping` and gets `pong`.
+- History: `GET https://game-log-rest-live.dndbeyond.com/v1/getmessages?gameId=..&userId=..` (bearer)
+  returns `{data[], lastKey}`.
+- Message: `{id, dateTime, gameId, userId, source ("Web", "MobileIOS"), entityId (character id),
+  eventType, data}`.
+
+Verified 2026-10-25: the socket accepts the DM's token and stays open. But the only event
+types published by the current character-sheet app bundle are `dice/roll/pending|fulfilled|rejected`,
+`character-sheet/item-shared/fulfilled` and `map/activate/fulfilled`. There is **no
+character-update / HP event**, and the history for the campaign contained only dice rolls.
+DDB's own combat tracker doesn't listen for sheet changes either. It fetches `scds` once on load.
+
+Conclusion: there is no live feed for HP/conditions. We poll (`apps/server/src/sync/pcPoller.ts`,
+6 s). The game log *is* useful for a future feature: showing players' dice rolls (initiative,
+attacks, saves) as they happen.

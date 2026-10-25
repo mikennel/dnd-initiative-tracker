@@ -5,7 +5,7 @@
 - [x] Encounter get and list, monster get, search and homebrew, campaign roster, character sheet
 - [x] Character HP formula verified against DDB's tracker
 - [x] Public config endpoint for lookup tables
-- [ ] Game-log websocket for live sheet updates (polling is used meanwhile)
+- [x] Game-log websocket investigated: it exists but carries only dice rolls, not sheet changes (polling stays)
 
 ## Phase 1: Core and server foundation
 - [x] Core domain types, events, reducer, `materialize` with undo/redo
@@ -30,12 +30,12 @@
 
 ## Next up
 - [ ] Verify import, PC sync and monster search against live DDB once the cookie is connected
-- [ ] PC AC and initiative bonus from the character sheet (currently entered manually)
-- [ ] Investigate the game-log websocket so PC updates arrive instantly instead of by polling
-- [ ] Rest buttons (short/long rest resets resources)
+- [ ] PC AC, initiative bonus and passive Perception from the `scds` batch endpoint (precomputed by DDB; needs a read-only POST, see docs/ddb-api.md)
+- [ ] Poll PCs with one `scds` request instead of one v5 sheet per character; keep v5 for spell slots at a slower rate
 
 ## Later
 - Chrome extension "import this page"
 - Session log export
+- Show players' DDB dice rolls live from the game-log socket (initiative rolls straight into the tracker)
 - Dice roller using DDB's `data-dicenotation` spans
 - Effect templates (Spirit Guardians, Cloud of Daggers, ...)
