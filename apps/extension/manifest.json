@@ -1,0 +1,25 @@
+{
+  "manifest_version": 3,
+  "name": "DnD Initiative Tracker: D&D Beyond connector",
+  "version": "0.1.0",
+  "description": "Hands your D&D Beyond login to the DnD Initiative Tracker running on this computer, so you don't have to copy cookies by hand.",
+  "permissions": ["cookies"],
+  "host_permissions": ["https://www.dndbeyond.com/*"],
+  "background": { "service_worker": "background.js" },
+  "content_scripts": [
+    {
+      "matches": [
+        "http://localhost:5173/*",
+        "http://localhost:5175/*",
+        "http://localhost:5176/*",
+        "http://localhost:5177/*",
+        "http://127.0.0.1:5173/*",
+        "http://127.0.0.1:5175/*",
+        "http://127.0.0.1:5176/*",
+        "http://127.0.0.1:5177/*"
+      ],
+      "js": ["connect.js"],
+      "run_at": "document_start"
+    }
+  ]
+}
