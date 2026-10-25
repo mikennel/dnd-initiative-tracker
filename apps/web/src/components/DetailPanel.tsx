@@ -12,8 +12,10 @@ import {
   type Resource,
 } from '@dnd/core';
 import { useState } from 'react';
+import { HP_SCALES, scaleHpEvents } from '../lib/actions.ts';
 import { uuid } from '../lib/ids.ts';
-import { ago } from './bits.tsx';
+import { imageToAvatar } from '../lib/image.ts';
+import { ago, Avatar } from './bits.tsx';
 import { StatBlock } from './StatBlock.tsx';
 
 interface Props {
@@ -30,7 +32,7 @@ export function DetailPanel({ c, state, snap, now, dispatch, targets }: Props) {
   const sb = c.source?.ddbMonsterId !== undefined ? state.statBlocks[String(c.source.ddbMonsterId)] : undefined;
   return (
     <div className="stack">
-      <Header c={c} dispatch={dispatch} />
+      <Header c={c} sb={sb} dispatch={dispatch} />
       {snap && <PcSheet snap={snap} now={now} />}
       <ConditionEditor c={c} state={state} dispatch={dispatch} targets={targets} />
       <Concentration c={c} dispatch={dispatch} />
@@ -46,16 +48,22 @@ export function DetailPanel({ c, state, snap, now, dispatch, targets }: Props) {
   );
 }
 
-function Header({ c, dispatch }: { c: Combatant; dispatch: Props['dispatch'] }) {
+function Header({ c, sb, dispatch }: { c: Combatant; sb?: { name: string; avatarUrl: string | null }; dispatch: Props['dispatch'] }) {
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(c.name);
+  const [avatar, setAvatar] = useState(c.avatarUrl ?? '');
+  const [pictureError, setPictureError] = useState<string | null>(null);
   const [ac, setAc] = useState(String(c.ac ?? ''));
   const [maxHp, setMaxHp] = useState(String(c.hp?.max ?? ''));
   const [curHp, setCurHp] = useState(String(c.hp?.current ?? ''));
   const [initBonus, setInitBonus] = useState(String(c.initBonus));
   const save = () => {
     const events: CombatEventBody[] = [
-      { type: 'combatant/updated', id: c.id, patch: { name: name.trim() || c.name, ac: ac === '' ? null : Number(ac), initBonus: Number(initBonus) || 0 } },
+      {
+        type: 'combatant/updated',
+        id: c.id,
+        patch: { name: name.trim() || c.name, ac: ac === '' ? null : Number(ac), initBonus: Number(initBonus) || 0, avatarUrl: avatar.trim() },
+      },
     ];
     if (c.hp && (Number(maxHp) !== c.hp.max || Number(curHp) !== c.hp.current)) events.push({ type: 'hp/set', id: c.id, max: Number(maxHp), current: Number(curHp) });
     dispatch(events.length > 1 ? { type: 'batch', label: `Edit ${c.name}`, events } : events[0]);
@@ -71,6 +79,8 @@ function Header({ c, dispatch }: { c: Combatant; dispatch: Props['dispatch'] }) 
           className="small"
           onClick={() => {
             setName(c.name);
+            setAvatar(c.avatarUrl ?? '');
+            setPictureError(null);
             setAc(String(c.ac ?? ''));
             setMaxHp(String(c.hp?.max ?? ''));
             setCurHp(String(c.hp?.current ?? ''));
@@ -91,14 +101,67 @@ function Header({ c, dispatch }: { c: Combatant; dispatch: Props['dispatch'] }) 
         <button className="small danger" onClick={() => dispatch({ type: 'combatant/removed', id: c.id })}>
           Remove
         </button>
+        {c.kind !== 'pc' && c.hp && (
+          <div className="row" style={{ flexBasis: '100%', gap: 4 }}>
+            <small className="muted">
+              {sb && c.name !== sb.name && !c.name.startsWith(sb.name) ? `${sb.name} · ` : ''}HP
+            </small>
+            {HP_SCALES.map((f) => (
+              <button key={f} className="small" title={`Multiply max and current HP by ${f}`} onClick={() => dispatch({ type: 'batch', label: `${c.name} HP ×${f}`, events: scaleHpEvents([c], f) })}>
+                ×{f}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
     );
   }
+  const upload = async (file: File | undefined) => {
+    if (!file) return;
+    try {
+      setAvatar(await imageToAvatar(file));
+      setPictureError(null);
+    } catch {
+      setPictureError("That file couldn't be read as an image.");
+    }
+  };
   return (
     <div className="card stack">
       <label className="row">
         Name <input className="grow" value={name} onChange={(e) => setName(e.target.value)} />
       </label>
+      <div className="row">
+        <Avatar url={avatar || undefined} name={name || c.name} />
+        <label className="button small">
+          Upload picture…
+          <input type="file" accept="image/*" className="visually-hidden" onChange={(e) => void upload(e.target.files?.[0])} />
+        </label>
+        <input
+          className="grow"
+          placeholder="…or paste an image URL"
+          aria-label="Picture URL"
+          value={avatar.startsWith('data:') ? '' : avatar}
+          onChange={(e) => setAvatar(e.target.value)}
+          onPaste={(e) => {
+            const file = [...e.clipboardData.files].find((f) => f.type.startsWith('image/'));
+            if (file) {
+              e.preventDefault();
+              void upload(file);
+            }
+          }}
+        />
+        {sb?.avatarUrl && avatar !== sb.avatarUrl && (
+          <button className="small ghost" onClick={() => setAvatar(sb.avatarUrl!)}>
+            Original
+          </button>
+        )}
+        {avatar && (
+          <button className="small ghost" onClick={() => setAvatar('')}>
+            None
+          </button>
+        )}
+      </div>
+      {pictureError && <div className="banner bad">{pictureError}</div>}
       <div className="row">
         <label className="row">
           AC <input type="number" value={ac} onChange={(e) => setAc(e.target.value)} />

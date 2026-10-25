@@ -1,6 +1,6 @@
 import { effectiveAc, effectiveHp, effectiveInitBonus, signed, type CombatEventBody, type Combatant, type PcSnapshot } from '@dnd/core';
 import { memo, useState, type KeyboardEvent } from 'react';
-import { ago, Avatar, HpBar } from './bits.tsx';
+import { Avatar, HpBar } from './bits.tsx';
 
 interface Props {
   c: Combatant;
@@ -8,13 +8,12 @@ interface Props {
   selected: boolean;
   checked: boolean;
   snap?: PcSnapshot;
-  now: number;
   dispatch: (...e: CombatEventBody[]) => void;
   onSelect: () => void;
   onCheck: (checked: boolean) => void;
 }
 
-export const CombatantRow = memo(function CombatantRow({ c, active, selected, checked, snap, now, dispatch, onSelect, onCheck }: Props) {
+export const CombatantRow = memo(function CombatantRow({ c, active, selected, checked, snap, dispatch, onSelect, onCheck }: Props) {
   const hp = effectiveHp(c, snap ? { [snap.characterId]: snap } : {});
   const ddbLinked = c.source?.ddbCharacterId !== undefined;
   const conditions = [...(snap?.conditions ?? []).map((x) => ({ id: `ddb-${x.name}`, label: x.level ? `${x.name} ${x.level}` : x.name, ddb: true })), ...c.conditions.map((x) => ({ id: x.id, label: conditionLabel(x), ddb: false }))];
@@ -32,6 +31,7 @@ export const CombatantRow = memo(function CombatantRow({ c, active, selected, ch
       <div className="crow-main">
         <div className="crow-name">
           <strong>{c.name}</strong>
+          {c.kind !== 'pc' && c.group && !c.name.startsWith(c.group) && <small className="muted">{c.group}</small>}
           {c.hidden && <span className="chip" title="Hidden from the table view">hidden</span>}
           {c.concentration && <span className="chip conc" title="Concentrating">◎ {c.concentration}</span>}
           {snap?.stats && (
@@ -44,6 +44,20 @@ export const CombatantRow = memo(function CombatantRow({ c, active, selected, ch
               Death saves ✓{snap.deathSaves.success} ✗{snap.deathSaves.fail}
             </span>
           )}
+          <span className="crow-actions" onClick={(e) => e.stopPropagation()}>
+            <button
+              className="icon-btn"
+              aria-label={c.hidden ? `Reveal ${c.name} on the table view` : `Hide ${c.name} from the table view`}
+              title={c.hidden ? 'Reveal on the table view' : 'Hide from the table view (still takes turns)'}
+              aria-pressed={c.hidden}
+              onClick={() => dispatch({ type: 'combatant/updated', id: c.id, patch: { hidden: !c.hidden } })}
+            >
+              {c.hidden ? <EyeOffIcon /> : <EyeIcon />}
+            </button>
+            <button className="icon-btn danger" aria-label={`Remove ${c.name}`} title="Remove from this combat (Undo brings it back)" onClick={() => dispatch({ type: 'combatant/removed', id: c.id })}>
+              <XIcon />
+            </button>
+          </span>
         </div>
         <div className="crow-chips">
           {conditions.map((x) => (
@@ -91,11 +105,6 @@ export const CombatantRow = memo(function CombatantRow({ c, active, selected, ch
         ) : (
           <span className="muted">{ddbLinked ? 'syncing…' : '—'}</span>
         )}
-        {ddbLinked ? (
-          <small className="muted" title="Read from the player's D&D Beyond sheet">
-            {snap ? `DDB · ${ago(snap.fetchedAt, now)}` : 'DDB'}
-          </small>
-        ) : null}
       </div>
       <div onClick={(e) => e.stopPropagation()}>
         {c.hp ? <HpInput id={c.id} dispatch={dispatch} /> : c.concentration ? <HpInput id={c.id} dispatch={dispatch} damageOnly /> : null}
@@ -177,5 +186,33 @@ export function HpInput({ id, dispatch, damageOnly }: { id: string; dispatch: Pr
         </>
       )}
     </div>
+  );
+}
+
+const iconProps = { width: 16, height: 16, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': true } as const;
+
+function EyeIcon() {
+  return (
+    <svg {...iconProps}>
+      <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  );
+}
+
+function EyeOffIcon() {
+  return (
+    <svg {...iconProps}>
+      <path d="M10.6 5.1A10.4 10.4 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-2.2 3.2M6.6 6.6C3.7 8.5 2 12 2 12s3.5 7 10 7c1.9 0 3.6-.6 5-1.4" />
+      <path d="M3 3l18 18" />
+    </svg>
+  );
+}
+
+function XIcon() {
+  return (
+    <svg {...iconProps}>
+      <path d="M18 6 6 18M6 6l12 12" />
+    </svg>
   );
 }

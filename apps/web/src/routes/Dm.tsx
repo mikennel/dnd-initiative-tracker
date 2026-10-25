@@ -6,6 +6,7 @@ import { ToastProvider } from '../components/bits.tsx';
 import { CombatantRow, HpInput } from '../components/CombatantRow.tsx';
 import { DdbStatusBanner } from '../components/DdbStatusBanner.tsx';
 import { DetailPanel } from '../components/DetailPanel.tsx';
+import { HP_SCALES, scaleHpEvents } from '../lib/actions.ts';
 import { Prompts } from '../components/Prompts.tsx';
 import { useCombat, useNow, useStatus } from '../lib/hooks.ts';
 import './tracker.css';
@@ -194,6 +195,29 @@ function Tracker() {
         <div className="multi-bar">
           <strong>{checkedIds.length} selected</strong>
           <MultiHp ids={checkedIds} dispatch={dispatch} />
+          {HP_SCALES.map((f) => (
+            <button key={f} className="small" title={`Multiply HP of the selected enemies and NPCs by ${f}`} onClick={() => dispatch({ type: 'batch', label: `HP ×${f}`, events: scaleHpEvents(checkedIds.map((id) => state.combatants[id]), f) })}>
+              HP ×{f}
+            </button>
+          ))}
+          <button
+            className="small"
+            onClick={() => {
+              const hide = checkedIds.some((id) => !state.combatants[id].hidden);
+              dispatch({ type: 'batch', label: hide ? 'Hide selected' : 'Reveal selected', events: checkedIds.map((id) => ({ type: 'combatant/updated', id, patch: { hidden: hide } })) });
+            }}
+          >
+            {checkedIds.some((id) => !state.combatants[id].hidden) ? 'Hide' : 'Reveal'}
+          </button>
+          <button
+            className="small danger"
+            onClick={() => {
+              dispatch({ type: 'batch', label: `Remove ${checkedIds.length}`, events: checkedIds.map((id) => ({ type: 'combatant/removed', id })) });
+              setChecked(new Set());
+            }}
+          >
+            Remove
+          </button>
           <small className="muted">Conditions added in the side panel apply to all selected.</small>
           <button className="small ghost" onClick={() => setChecked(new Set())}>
             Clear
@@ -216,7 +240,6 @@ function Tracker() {
                 selected={focusId === c.id}
                 checked={checked.has(c.id)}
                 snap={c.source?.ddbCharacterId !== undefined ? pcLive[c.source.ddbCharacterId] : undefined}
-                now={now}
                 dispatch={dispatch}
                 onSelect={() => setSelectedId(c.id)}
                 onCheck={(on) =>

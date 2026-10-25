@@ -25,7 +25,9 @@ CombatState {
 | `conditions[]` | See below |
 | `concentration` | Spell name, or null |
 | `resources[]` | See below |
-| `hidden` | Excluded from the player view entirely |
+| `hidden` | Excluded from the player view entirely, but still takes turns. Revealing it makes it appear on `/table` in its initiative slot |
+| `avatarUrl` | Picture URL, or a small JPEG data URL from an upload. `''` means no picture |
+| `group` | The original creature type ("Beholder"). Shown next to a custom name on the DM side only |
 | `defeated` | Set automatically when a monster or NPC hits 0 HP. Skipped in turn order if `settings.skipDefeated` |
 | `source` | `{ddbMonsterId}` or `{ddbCharacterId}` |
 | `roundsRemaining` | Effects only. Decremented at the start of the effect's turn, and prompts at 0 |

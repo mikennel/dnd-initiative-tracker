@@ -34,7 +34,7 @@ export function AddCombatant({ open, onClose, state, dispatch }: Props) {
       <div className="tabs">
         {(['monster', 'pc', 'npc', 'effect'] as const).map((t) => (
           <button key={t} className={tab === t ? 'on' : ''} onClick={() => setTab(t)}>
-            {{ monster: 'Monster', pc: 'Player character', npc: 'NPC / custom', effect: 'Lair / environment' }[t]}
+            {{ monster: 'Monster', pc: 'Player character', npc: 'Custom creature', effect: 'Lair / environment' }[t]}
           </button>
         ))}
       </div>
@@ -200,7 +200,8 @@ function NpcTab({ add }: { add: AddFn }) {
   const [hp, setHp] = useState(10);
   const [init, setInit] = useState(0);
   const [count, setCount] = useState(1);
-  const [kind, setKind] = useState<'npc' | 'monster'>('npc');
+  const [kind, setKind] = useState<'npc' | 'monster'>('monster');
+  const [hidden, setHidden] = useState(false);
   const go = () => {
     const list = Array.from({ length: count }, (_, i) => ({
       ...baseCombatant(count > 1 ? `${name.trim()} (${letterSuffix(i)})` : name.trim()),
@@ -209,6 +210,7 @@ function NpcTab({ add }: { add: AddFn }) {
       initBonus: init,
       hp: { current: hp, max: hp, temp: 0 },
       group: name.trim(),
+      hidden,
     }));
     add(list, `Add ${name.trim()}`);
   };
@@ -228,10 +230,13 @@ function NpcTab({ add }: { add: AddFn }) {
         <label className="row">
           Count <input type="number" min={1} value={count} onChange={(e) => setCount(Math.max(1, Number(e.target.value)))} />
         </label>
-        <select value={kind} onChange={(e) => setKind(e.target.value as typeof kind)}>
-          <option value="npc">Ally / NPC</option>
+        <select value={kind} onChange={(e) => setKind(e.target.value as typeof kind)} aria-label="Side">
           <option value="monster">Enemy</option>
+          <option value="npc">Ally / NPC</option>
         </select>
+        <label className="row">
+          <input type="checkbox" checked={hidden} onChange={(e) => setHidden(e.target.checked)} /> Hidden from players
+        </label>
       </div>
       <div>
         <button className="primary" disabled={!name.trim()} onClick={go}>

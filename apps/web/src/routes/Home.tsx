@@ -11,7 +11,8 @@ export function Home() {
   const nav = useNavigate();
   const { status, serverDown } = useStatus();
   const [combats, setCombats] = useState<CombatSummary[] | null>(null);
-  const [ddb, setDdb] = useState<{ total: number; encounters: DdbEncounter[] } | null>(null);
+  const [ddb, setDdb] = useState<DdbEncounter[] | null>(null);
+  const [query, setQuery] = useState('');
   const [ddbError, setDdbError] = useState<string | null>(null);
   const [page, setPage] = useState(0);
   const [url, setUrl] = useState('');
@@ -22,11 +23,32 @@ export function Home() {
   const loadCombats = () => api.combats().then(setCombats).catch(() => setCombats([]));
   useEffect(() => void loadCombats(), []);
 
+  // Load every encounter once (a DM has ~100) so search and paging are instant and local.
   useEffect(() => {
     if (status?.ddb !== 'ok') return;
     setDdbError(null);
-    api.ddbEncounters(page * PAGE, PAGE).then(setDdb).catch((e) => setDdbError(e.message));
-  }, [status?.ddb, page]);
+    let alive = true;
+    (async () => {
+      const all: DdbEncounter[] = [];
+      for (let skip = 0; ; skip += 100) {
+        const res = await api.ddbEncounters(skip, 100);
+        all.push(...res.encounters);
+        if (res.encounters.length === 0 || all.length >= res.total) break;
+      }
+      if (alive) setDdb(all.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' })));
+    })().catch((e) => alive && setDdbError(e.message));
+    return () => {
+      alive = false;
+    };
+  }, [status?.ddb]);
+
+  const terms = query.toLowerCase().split(/\s+/).filter(Boolean);
+  const matches = (ddb ?? []).filter((e) => {
+    const text = [e.name, e.campaign?.name ?? '', ...e.monsters.map((m) => m.name)].join(' ').toLowerCase();
+    return terms.every((t) => text.includes(t));
+  });
+  const pageCount = Math.max(1, Math.ceil(matches.length / PAGE));
+  const shown = matches.slice(page * PAGE, (page + 1) * PAGE);
 
   const importEnc = async (id: string) => {
     setBusy(id);
@@ -109,8 +131,21 @@ export function Home() {
             <>
               {ddbError && <div className="banner bad">{ddbError}</div>}
               {!ddb && !ddbError && <p className="muted">Loading your encounters…</p>}
+              {ddb && (
+                <input
+                  type="search"
+                  placeholder={`Search ${ddb.length} encounters by name, campaign or monster…`}
+                  aria-label="Search D&D Beyond encounters"
+                  value={query}
+                  onChange={(e) => {
+                    setQuery(e.target.value);
+                    setPage(0);
+                  }}
+                />
+              )}
+              {ddb && matches.length === 0 && <p className="muted">No encounters match “{query}”.</p>}
               <ul className="list">
-                {ddb?.encounters.map((e) => (
+                {shown.map((e) => (
                   <li key={e.id}>
                     <div className="grow">
                       <strong>{e.name}</strong>
@@ -124,16 +159,16 @@ export function Home() {
                   </li>
                 ))}
               </ul>
-              {ddb && ddb.total > PAGE && (
+              {matches.length > PAGE && (
                 <div className="row">
                   <button className="small" disabled={page === 0} onClick={() => setPage(page - 1)}>
-                    ← Newer
+                    ← Previous
                   </button>
                   <span className="muted">
-                    Page {page + 1} of {Math.ceil(ddb.total / PAGE)}
+                    Page {page + 1} of {pageCount}
                   </span>
-                  <button className="small" disabled={(page + 1) * PAGE >= ddb.total} onClick={() => setPage(page + 1)}>
-                    Older →
+                  <button className="small" disabled={page + 1 >= pageCount} onClick={() => setPage(page + 1)}>
+                    Next →
                   </button>
                 </div>
               )}

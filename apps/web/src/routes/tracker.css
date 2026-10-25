@@ -36,8 +36,15 @@
 .init-input { width: 56px; text-align: center; font-weight: 700; font-size: 1.05rem; padding: 4px; }
 .crow-main { min-width: 0; }
 .crow-name { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-.crow-name strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.crow-name strong { overflow-wrap: anywhere; }
 .passives { font-size: 0.8rem; color: var(--muted); white-space: nowrap; }
+.crow-actions { margin-left: auto; display: none; gap: 2px; }
+/* Shown on hover or selection so they don't eat the narrow name column the rest of the time. */
+.crow:hover .crow-actions, .crow.selected .crow-actions { display: inline-flex; }
+.icon-btn { display: inline-flex; align-items: center; justify-content: center; min-width: 32px; min-height: 32px; padding: 0; border: none; background: transparent; color: var(--muted); border-radius: 6px; }
+.icon-btn:hover { background: var(--surface-2); color: var(--text); }
+.icon-btn.danger:hover { color: var(--bad, #e5484d); }
+@media (hover: none) { .crow-actions { display: inline-flex; } }
 .crow-chips { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 2px; }
 .crow-ac { text-align: center; font-weight: 700; font-size: 1.05rem; line-height: 1; }
 .crow-ac small { display: block; font-size: 0.65rem; color: var(--muted); font-weight: 400; }

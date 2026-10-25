@@ -2,8 +2,9 @@ import { healthDescriptor, type HitPoints } from '@dnd/core';
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 
 export function Avatar({ url, name, size = 36 }: { url?: string | null; name: string; size?: number }) {
-  const [broken, setBroken] = useState(false);
-  if (url && !broken) return <img className="avatar" src={url} alt="" width={size} height={size} style={{ width: size, height: size }} onError={() => setBroken(true)} />;
+  // Remember which URL failed, so a new picture gets a fresh try.
+  const [broken, setBroken] = useState<string | null>(null);
+  if (url && broken !== url) return <img className="avatar" src={url} alt="" width={size} height={size} style={{ width: size, height: size }} onError={() => setBroken(url)} />;
   return (
     <span className="avatar placeholder" style={{ width: size, height: size }}>
       {name.slice(0, 1).toUpperCase()}

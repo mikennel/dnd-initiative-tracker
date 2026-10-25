@@ -39,6 +39,13 @@
 - [x] App icon: "Hooded DM" (`apps/desktop/build/icon.svg`; also the web favicon)
 - [x] Auto-update from GitHub Releases (ADR 0008); first real release still to publish
 
+## Quality of life (2026-10-25)
+- [x] Search all D&D Beyond encounters (loaded once, filtered locally); Previous/Next paging, sorted by name
+- [x] Rename and re-picture any combatant (upload, paste or URL; resized to a 128 px JPEG inside the event). The original creature type shows next to a custom name, DM side only
+- [x] Row buttons to hide/reveal and remove; multi-select Hide/Reveal, Remove and HP ×1.5/×2
+- [x] Custom creature tab defaults to Enemy and can add hidden
+- [x] Dropped the "DDB · Ns ago" sync label from tracker rows (still in the PC panel)
+
 ## Later
 - Chrome extension "import this page"
 - Session log export

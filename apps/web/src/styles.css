@@ -71,6 +71,12 @@ button.ghost { background: transparent; border-color: transparent; }
 button.ghost:hover:not(:disabled) { background: var(--surface-2); }
 button.small { min-height: 26px; padding: 2px 8px; font-size: 0.85rem; }
 button.danger { color: var(--bad); }
+/* A <label> wrapping a file input, styled as a small button. */
+label.button { display: inline-flex; align-items: center; background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; white-space: nowrap; }
+label.button.small { min-height: 26px; padding: 2px 8px; font-size: 0.85rem; }
+label.button:hover { border-color: var(--muted); }
+label.button:focus-within { outline: 2px solid var(--active); outline-offset: 1px; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 input, select, textarea {
   background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; min-height: 34px;
 }
