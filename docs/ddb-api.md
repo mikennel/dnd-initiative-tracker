@@ -115,7 +115,7 @@ currentHp = maxHp - removedHitPoints
 tempHp    = temporaryHitPoints
 ```
 Item modifiers only count if the item is `equipped` (and `isAttuned` when `definition.canAttune`).
-Match `modifier.componentId` to `inventory[].definition.id`. Verified: Taldum 42 base + 5 bonus
+Match `modifier.componentId` to `inventory[].definition.id`. Verified on a real level 9 Paladin/Sorcerer: 42 base + 5 bonus
 + 5×9 CON + 2×9 (Tough) = 110 max, removed 55 → 55/110, matching DDB's own tracker.
 
 Other useful fields: `conditions[]{id, level}`, `deathSaves{failCount, successCount, isStabilized}`,
@@ -142,7 +142,7 @@ foundCharacters[]: characterId, name, level, userId, isAssignedToPlayer,
   classes, race, attacks, attunedItems, inspiration, currentXp, decorations (avatar)
 ```
 Everything here is already computed by DDB (AC, initiative and max HP include items,
-feats and class features), so we don't have to re-implement the rules engine. Taldum's
+feats and class features), so we don't have to re-implement the rules engine. One character's
 `hitPointInfo` (55/110) matched our own v5-derived calculation. Spell slots and limited-use
 actions are **not** included; they still need the v5 sheet. `queuedIds` suggests a cache
 that is recomputed on demand: an unknown id came back in `queuedIds`, not `notFoundIds`. Results are
