@@ -37,7 +37,7 @@
 - [x] Chrome connector extension: one-click D&D Beyond login handoff, works with Google sign-in
 - [x] Firefox: read the login straight from the profile (no extension); extension also runs in Firefox (ADR 0007)
 - [x] App icon: "Hooded DM" (`apps/desktop/build/icon.svg`; also the web favicon)
-- [x] Auto-update from GitHub Releases (ADR 0008); first real release still to publish
+- [x] Auto-update from GitHub Releases (ADR 0008); first release v0.1.0 published 2026-10-25
 
 ## Quality of life (2026-10-25)
 - [x] Search all D&D Beyond encounters (loaded once, filtered locally); Previous/Next paging, sorted by name
