@@ -1,0 +1,26 @@
+{
+  "name": "dnd-initiative-tracker",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "concurrently -n server,web -c blue,magenta \"npm run dev -w @dnd/server\" \"npm run dev -w @dnd/web\"",
+    "build": "npm run build -w @dnd/web",
+    "start": "npm run start -w @dnd/server",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc -p packages/core && tsc -p apps/server && tsc -p apps/web"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "concurrently": "^9.1.0",
+    "typescript": "^5.7.2",
+    "vitest": "^3.0.0"
+  },
+  "engines": {
+    "node": ">=22.13"
+  }
+}
