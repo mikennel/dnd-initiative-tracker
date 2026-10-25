@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { encounterToEvents, type CombatEvent, type CombatEventBody } from '@dnd/core';
-import type { FastifyInstance, FastifyReply } from 'fastify';
+import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import type { AppContext } from './app.ts';
 import { DdbError } from './ddb/client.ts';
 
@@ -22,13 +22,19 @@ export function registerRoutes(app: FastifyInstance, ctx: AppContext) {
     lanUrls: ctx.lanUrls,
   }));
 
-  app.put<{ Body: { cobaltSession: string } }>('/api/settings/ddb', async (req) => {
+  // The server listens on the LAN for the table view, but only this computer may change the
+  // D&D Beyond login.
+  const localOnly = async (req: FastifyRequest, reply: FastifyReply) => {
+    if (!isLoopback(req.socket.remoteAddress)) return reply.status(403).send({ error: 'Settings can only be changed on the computer running the tracker.' });
+  };
+
+  app.put<{ Body: { cobaltSession: string } }>('/api/settings/ddb', { preHandler: localOnly }, async (req) => {
     await ddb.setSession(String(req.body?.cobaltSession ?? ''));
     void poller.tick();
     return { ddb: ddb.status };
   });
 
-  app.delete('/api/settings/ddb', async () => {
+  app.delete('/api/settings/ddb', { preHandler: localOnly }, async () => {
     ddb.clearSession();
     return { ddb: ddb.status };
   });
@@ -132,4 +138,8 @@ export function registerRoutes(app: FastifyInstance, ctx: AppContext) {
     db.prepare('DELETE FROM encounters WHERE id = ?').run(req.params.id);
     return { ok: true };
   });
+}
+
+function isLoopback(addr: string | undefined): boolean {
+  return !!addr && (addr === '::1' || addr.startsWith('127.') || addr === '::ffff:127.0.0.1');
 }

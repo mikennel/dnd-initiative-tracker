@@ -85,6 +85,14 @@ describe('API', () => {
     expect(good.json().ddb).toBe('ok');
   });
 
+  it('only lets this computer change the D&D Beyond login', async () => {
+    const { ctx } = await setup();
+    const lan = await ctx.app.inject({ method: 'PUT', url: '/api/settings/ddb', remoteAddress: '192.168.1.20', payload: { cobaltSession: 'good-cookie' } });
+    expect(lan.statusCode).toBe(403);
+    expect((await ctx.app.inject({ method: 'DELETE', url: '/api/settings/ddb', remoteAddress: '192.168.1.20' })).statusCode).toBe(403);
+    expect((await ctx.app.inject({ url: '/api/status', remoteAddress: '192.168.1.20' })).json().ddb).toBe('unconfigured');
+  });
+
   it('imports a DDB encounter into a new event-sourced combat', async () => {
     const { ctx, ddb } = await setup('good-cookie');
     const res = await ctx.app.inject({ method: 'POST', url: '/api/combats/import', payload: { encounterId: encounter.id } });
