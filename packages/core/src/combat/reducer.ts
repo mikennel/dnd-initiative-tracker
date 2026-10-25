@@ -167,8 +167,20 @@ export function apply(s: CombatState, e: CombatEventBody, eventId: string): void
       if (!c?.hp) return;
       c.hp.temp = Math.max(0, e.amount);
       return;
+    case 'hp/scaled': {
+      if (!c?.hp || !(e.factor > 0)) return;
+      c.hpBase ??= c.hp.max;
+      const damage = c.hp.max - c.hp.current;
+      c.hp.max = Math.max(1, Math.round(c.hpBase * e.factor));
+      c.hp.current = Math.max(0, c.hp.max - damage);
+      c.defeated = c.kind !== 'pc' && c.hp.current === 0;
+      if (e.factor === 1) delete c.hpBase;
+      return;
+    }
     case 'hp/set':
       if (!c?.hp) return;
+      // A hand-edited max becomes the new original for scaling.
+      if (e.max !== undefined) delete c.hpBase;
       if (e.max !== undefined) c.hp.max = Math.max(0, e.max);
       if (e.current !== undefined) c.hp.current = Math.max(0, e.current);
       c.hp.current = Math.min(c.hp.current, c.hp.max);

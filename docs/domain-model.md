@@ -26,6 +26,7 @@ CombatState {
 | `concentration` | Spell name, or null |
 | `resources[]` | See below |
 | `hidden` | Excluded from the player view entirely, but still takes turns. Revealing it makes it appear on `/table` in its initiative slot |
+| `hpBase` | Original max HP, set the first time `hp/scaled` runs. ×1.5/×2 multiply this, never the current max. ×1 restores it and clears the field, and a hand-edited max (`hp/set` with `max`) also clears it |
 | `avatarUrl` | Picture URL, or a small JPEG data URL from an upload. `''` means no picture |
 | `group` | The original creature type ("Beholder"). Shown next to a custom name on the DM side only |
 | `defeated` | Set automatically when a monster or NPC hits 0 HP. Skipped in turn order if `settings.skipDefeated` |

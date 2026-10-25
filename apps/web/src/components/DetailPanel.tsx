@@ -12,7 +12,7 @@ import {
   type Resource,
 } from '@dnd/core';
 import { useState } from 'react';
-import { HP_SCALES, scaleHpEvents } from '../lib/actions.ts';
+import { HP_SCALES, hpScale, scaleHpEvents } from '../lib/actions.ts';
 import { uuid } from '../lib/ids.ts';
 import { imageToAvatar } from '../lib/image.ts';
 import { ago, Avatar } from './bits.tsx';
@@ -107,7 +107,13 @@ function Header({ c, sb, dispatch }: { c: Combatant; sb?: { name: string; avatar
               {sb && c.name !== sb.name && !c.name.startsWith(sb.name) ? `${sb.name} · ` : ''}HP
             </small>
             {HP_SCALES.map((f) => (
-              <button key={f} className="small" title={`Multiply max and current HP by ${f}`} onClick={() => dispatch({ type: 'batch', label: `${c.name} HP ×${f}`, events: scaleHpEvents([c], f) })}>
+              <button
+                key={f}
+                className={hpScale(c) === f ? 'small primary' : 'small'}
+                aria-pressed={hpScale(c) === f}
+                title={f === 1 ? `Original max HP (${c.hpBase ?? c.hp!.max})` : `${f}× the original max HP (${Math.round((c.hpBase ?? c.hp!.max) * f)})`}
+                onClick={() => dispatch(...scaleHpEvents([c], f))}
+              >
                 ×{f}
               </button>
             ))}

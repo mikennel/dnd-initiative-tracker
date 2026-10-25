@@ -288,3 +288,27 @@ describe('lineup and Alert swaps', () => {
     expect(state.lineup).toBe(true);
   });
 });
+
+describe('HP scaling', () => {
+  const boss = add('boss', { hp: { current: 100, max: 100, temp: 0 } });
+  const scale = (factor: number): CombatEventBody => ({ type: 'hp/scaled', id: 'boss', factor });
+
+  it('scales from the original max, not the current one', () => {
+    const hp = (...e: CombatEventBody[]) => run(boss, ...e).state.combatants.boss.hp;
+    expect(hp(scale(2))).toMatchObject({ max: 200, current: 200 });
+    expect(hp(scale(2), scale(2))).toMatchObject({ max: 200, current: 200 });
+    expect(hp(scale(2), scale(1.5))).toMatchObject({ max: 150, current: 150 });
+    expect(hp(scale(2), scale(1))).toMatchObject({ max: 100, current: 100 });
+    expect(run(boss, scale(2), scale(1)).state.combatants.boss.hpBase).toBeUndefined();
+  });
+
+  it('keeps damage already taken', () => {
+    const { state } = run(boss, { type: 'hp/damage', id: 'boss', amount: 30 }, scale(2));
+    expect(state.combatants.boss.hp).toMatchObject({ max: 200, current: 170 });
+  });
+
+  it('treats a hand-edited max as the new original', () => {
+    const { state } = run(boss, scale(2), { type: 'hp/set', id: 'boss', max: 80, current: 80 }, scale(1.5));
+    expect(state.combatants.boss.hp).toMatchObject({ max: 120, current: 120 });
+  });
+});

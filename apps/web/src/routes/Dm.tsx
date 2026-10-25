@@ -213,7 +213,7 @@ function Tracker() {
           <strong>{checkedIds.length} selected</strong>
           <MultiHp ids={checkedIds} dispatch={dispatch} />
           {HP_SCALES.map((f) => (
-            <button key={f} className="small" title={`Multiply HP of the selected enemies and NPCs by ${f}`} onClick={() => dispatch({ type: 'batch', label: `HP ×${f}`, events: scaleHpEvents(checkedIds.map((id) => state.combatants[id]), f) })}>
+            <button key={f} className="small" title={f === 1 ? 'Restore the original max HP of the selected enemies and NPCs' : `Set the selected enemies and NPCs to ${f}× their original max HP`} onClick={() => dispatch({ type: 'batch', label: `HP ×${f}`, events: scaleHpEvents(checkedIds.map((id) => state.combatants[id]), f) })}>
               HP ×{f}
             </button>
           ))}

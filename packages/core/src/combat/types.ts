@@ -47,6 +47,8 @@ export interface Combatant {
   dex?: number;
   ac: number | null;
   hp: HitPoints | null;
+  /** Max HP before any ×1.5/×2 scaling (`hp/scaled`); unset until first scaled. */
+  hpBase?: number;
   hidden: boolean;
   defeated: boolean;
   conditions: CombatCondition[];

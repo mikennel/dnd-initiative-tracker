@@ -24,6 +24,7 @@
 .crow {
   display: grid; grid-template-columns: auto 56px 36px minmax(0, 1fr) 44px 92px auto; align-items: center; gap: 10px;
   padding: 8px 10px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); cursor: pointer;
+  position: relative;
 }
 .crow:hover { border-color: var(--muted); }
 .crow.selected { box-shadow: 0 0 0 2px var(--active) inset; }
@@ -40,9 +41,11 @@
 .passives { font-size: 0.8rem; color: var(--muted); white-space: nowrap; }
 .lineup-list li.swapping { background: var(--active-bg); border-radius: 8px; }
 .lineup-init { min-width: 2.5ch; text-align: right; font-weight: 700; font-size: 1.1rem; font-variant-numeric: tabular-nums; }
-.crow-actions { margin-left: auto; display: none; gap: 2px; }
-/* Shown on hover or selection so they don't eat the narrow name column the rest of the time. */
+/* A small toolbar sitting on the row's top border: it never takes part in layout, so rows don't
+   grow or reflow, and it covers nothing but border when it appears on hover or selection. */
+.crow-actions { position: absolute; top: -13px; right: 12px; display: none; gap: 2px; padding: 2px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; box-shadow: var(--shadow); z-index: 1; }
 .crow:hover .crow-actions, .crow.selected .crow-actions { display: inline-flex; }
+.crow-actions .icon-btn { min-width: 26px; min-height: 26px; }
 .icon-btn { display: inline-flex; align-items: center; justify-content: center; min-width: 32px; min-height: 32px; padding: 0; border: none; background: transparent; color: var(--muted); border-radius: 6px; }
 .icon-btn:hover { background: var(--surface-2); color: var(--text); }
 .icon-btn.danger:hover { color: var(--bad, #e5484d); }

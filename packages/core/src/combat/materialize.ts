@@ -59,6 +59,7 @@ export function describeEvent(e: CombatEventBody, s?: CombatState): string {
     case 'hp/heal': return `Heal ${name(e.id)} ${e.amount}`;
     case 'hp/temp': return `Temp HP for ${name(e.id)}`;
     case 'hp/set': return `Set HP of ${name(e.id)}`;
+    case 'hp/scaled': return `${name(e.id)} HP ×${e.factor}`;
     case 'condition/added': return `${e.condition.name} on ${name(e.id)}`;
     case 'condition/removed': return `Remove condition from ${name(e.id)}`;
     case 'concentration/set': return e.spell ? `${name(e.id)} concentrates` : `${name(e.id)} drops concentration`;

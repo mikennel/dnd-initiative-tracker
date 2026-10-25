@@ -25,6 +25,8 @@ export type CombatEventBody =
   | { type: 'hp/heal'; id: string; amount: number }
   | { type: 'hp/temp'; id: string; amount: number }
   | { type: 'hp/set'; id: string; current?: number; max?: number }
+  /** Max HP = original max × factor (1 restores it). Damage already taken carries over. */
+  | { type: 'hp/scaled'; id: string; factor: number }
   | { type: 'condition/added'; id: string; condition: CombatCondition }
   | { type: 'condition/removed'; id: string; conditionId: string }
   | { type: 'concentration/set'; id: string; spell: string | null }
