@@ -23,6 +23,7 @@ relevant page in the same commit.
 | [0005](decisions/0005-player-view-projection.md) | Player view is a server-side projection |
 | [0006](decisions/0006-electron-desktop-and-chrome-connector.md) | Electron desktop app; Chrome extension hands over the D&D Beyond login |
 | [0007](decisions/0007-firefox-cookie-import.md) | Read the D&D Beyond login straight from Firefox; Chrome keeps the extension |
+| [0008](decisions/0008-auto-update-from-github-releases.md) | Auto-update from GitHub Releases (Windows installs itself; macOS links to the download) |
 
 ### Writing an ADR
 Copy the newest ADR and bump the number. Keep it short: **Context** (why we had to decide),

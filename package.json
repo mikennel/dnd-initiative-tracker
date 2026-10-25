@@ -14,7 +14,8 @@
     "test:watch": "vitest",
     "typecheck": "tsc -p packages/core && tsc -p apps/server && tsc -p apps/web && tsc -p apps/desktop",
     "desktop": "npm start -w @dnd/desktop",
-    "dist": "npm run dist -w @dnd/desktop"
+    "dist": "npm run dist -w @dnd/desktop",
+    "release": "node scripts/release.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

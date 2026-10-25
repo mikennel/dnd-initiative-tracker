@@ -1,6 +1,7 @@
 import { app, BrowserWindow, clipboard, dialog, Menu, shell, type MenuItemConstructorOptions } from 'electron';
 import { join } from 'node:path';
 import { startServer, type RunningServer } from '@dnd/server/src/start.ts';
+import { checkForUpdatesManually, initUpdates, RELEASES_URL } from './updates.ts';
 
 /**
  * Desktop shell (ADR 0006): runs the same Fastify server as `npm start` inside Electron's
@@ -29,6 +30,7 @@ async function boot() {
   server = await startServer({ dataDir, staticDir, port: Number(process.env.PORT ?? 5175), portFallbacks: 10 });
   Menu.setApplicationMenu(buildMenu());
   openMainWindow();
+  initUpdates();
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) openMainWindow();
   });
@@ -98,6 +100,15 @@ function buildMenu(): Menu {
     { role: 'editMenu' },
     { role: 'viewMenu' },
     { role: 'windowMenu' },
+    {
+      role: 'help',
+      submenu: [
+        { label: 'Check for Updates…', click: () => void checkForUpdatesManually() },
+        { label: 'Release Notes', click: () => void shell.openExternal(RELEASES_URL) },
+        { type: 'separator' },
+        { label: `Version ${app.getVersion()}`, enabled: false },
+      ],
+    },
   ];
   return Menu.buildFromTemplate(template);
 }

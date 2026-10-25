@@ -15,21 +15,71 @@
     "@dnd/server": "*",
     "electron": "45.0.0",
     "electron-builder": "^26.0.0",
+    "electron-updater": "^6.8.11",
     "esbuild": "^0.28.0"
   },
   "build": {
     "appId": "com.mikennel.dnd-initiative-tracker",
     "productName": "DnD Initiative Tracker",
-    "directories": { "output": "release", "buildResources": "build" },
-    "files": ["dist/**", "package.json"],
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "dist/**",
+      "package.json"
+    ],
     "extraResources": [
-      { "from": "../web/dist", "to": "web" },
-      { "from": "../extension", "to": "extension" }
+      {
+        "from": "../web/dist",
+        "to": "web"
+      },
+      {
+        "from": "../extension",
+        "to": "extension"
+      }
     ],
     "asar": true,
-    "win": { "target": "nsis" },
-    "nsis": { "oneClick": false, "allowToChangeInstallationDirectory": true },
-    "mac": { "target": "dmg", "category": "public.app-category.games", "identity": null },
-    "linux": { "target": "AppImage" }
+    "win": {
+      "target": "nsis",
+      "artifactName": "dnd-initiative-tracker-setup-${version}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    },
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64",
+            "x64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "arm64",
+            "x64"
+          ]
+        }
+      ],
+      "category": "public.app-category.games",
+      "identity": null,
+      "artifactName": "dnd-initiative-tracker-${version}-${arch}.${ext}"
+    },
+    "linux": {
+      "target": "AppImage",
+      "artifactName": "dnd-initiative-tracker-${version}.${ext}"
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "mikennel",
+        "repo": "dnd-initiative-tracker",
+        "releaseType": "release"
+      }
+    ]
   }
 }

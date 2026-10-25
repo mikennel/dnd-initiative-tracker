@@ -24,7 +24,7 @@ firewall the first time. Allow it on private networks.
 npm run desktop    # builds the web app, bundles apps/desktop and opens it in Electron
 npm run dist       # Windows installer → apps/desktop/release/DnD Initiative Tracker Setup x.y.z.exe
 ```
-The installer is unsigned. Windows shows SmartScreen once: **More info → Run anyway**.
+Installer: `apps/desktop/release/dnd-initiative-tracker-setup-x.y.z.exe`. It is unsigned. Windows shows SmartScreen once: **More info → Run anyway**.
 macOS builds come from GitHub Actions (**Actions → Desktop builds → Run workflow**, or push a
 `v*` tag); download the `.dmg` from the run's artifacts. macOS blocks the first launch: open
 **System Settings → Privacy & Security** and click **Open Anyway**. If it says the app "is
@@ -33,6 +33,14 @@ damaged", run `xattr -cr "/Applications/DnD Initiative Tracker.app"` once.
 The desktop app keeps its data in the OS app-data folder (**File → Open Data Folder**), not
 in `apps/server/data/`. To bring over combats from the npm version, quit the app and copy
 `tracker.db` (and `secrets.json` if you like) into that folder.
+
+## Releasing an update (ADR 0008)
+```
+npm run release -- patch     # or minor / major: bumps apps/desktop, commits, tags vX.Y.Z
+git push --follow-tags       # GitHub Actions builds Windows + macOS and publishes the release
+```
+Installed apps find it within 4 hours, at the next launch, or via **Help → Check for Updates…**.
+Windows installs it on restart; macOS shows a download link (unsigned apps can't self-update).
 
 ## Connecting D&D Beyond
 - **Firefox:** log in at dndbeyond.com in Firefox, then **Settings → Use my Firefox login**.
