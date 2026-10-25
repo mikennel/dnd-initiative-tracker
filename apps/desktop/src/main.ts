@@ -10,6 +10,12 @@ import { checkForUpdatesManually, initUpdates, RELEASES_URL } from './updates.ts
 
 let server: RunningServer | null = null;
 let win: BrowserWindow | null = null;
+/**
+ * `npm run dev:desktop`: the window loads the Vite dev server (hot reload) and the API comes
+ * from `npm run dev`'s server, so the app doesn't start its own.
+ */
+const devUrl = process.env.DND_DEV_URL;
+let appOrigin = '';
 
 const dataDir = process.env.DATA_DIR ?? join(app.getPath('userData'), 'data');
 const staticDir = app.isPackaged ? join(process.resourcesPath, 'web') : join(app.getAppPath(), '../web/dist');
@@ -27,7 +33,12 @@ if (!app.requestSingleInstanceLock()) {
 }
 
 async function boot() {
-  server = await startServer({ dataDir, staticDir, port: Number(process.env.PORT ?? 5175), portFallbacks: 10 });
+  if (devUrl) {
+    appOrigin = new URL(devUrl).origin;
+  } else {
+    server = await startServer({ dataDir, staticDir, port: Number(process.env.PORT ?? 5175), portFallbacks: 10 });
+    appOrigin = `http://localhost:${server.port}`;
+  }
   Menu.setApplicationMenu(buildMenu());
   openMainWindow();
   initUpdates();
@@ -41,7 +52,7 @@ function fail(err: unknown) {
   app.quit();
 }
 
-const origin = () => `http://localhost:${server!.port}`;
+const origin = () => appOrigin;
 
 function openMainWindow() {
   win = new BrowserWindow({
@@ -56,6 +67,8 @@ function openMainWindow() {
   win.once('ready-to-show', () => win?.show());
   win.on('closed', () => (win = null));
   routeLinks(win);
+  // In dev, Vite may still be starting: retry until it answers.
+  if (devUrl) win.webContents.on('did-fail-load', (_e, code) => code !== -3 && setTimeout(() => void win?.loadURL(`${origin()}/`), 1000));
   void win.loadURL(`${origin()}/`);
 }
 
@@ -81,14 +94,14 @@ function routeLinks(w: BrowserWindow) {
 }
 
 function buildMenu(): Menu {
-  const tableUrl = () => `${server!.ctx.lanUrls[0] ?? origin()}/table`;
+  const tableUrl = () => `${server?.ctx.lanUrls[0] ?? origin()}/table`;
   const file: MenuItemConstructorOptions = {
     label: 'File',
     submenu: [
       { label: 'Open Table View in Browser', click: () => void shell.openExternal(`${origin()}/table`) },
       { label: 'Copy Table Link for Other Devices', click: () => clipboard.writeText(tableUrl()) },
       { type: 'separator' },
-      { label: 'Open Data Folder', click: () => void shell.openPath(dataDir) },
+      { label: 'Open Data Folder', click: () => void shell.openPath(devUrl ? join(app.getAppPath(), '../server/data') : dataDir) },
       { label: 'Show Browser Extension Folder', click: () => void shell.openPath(extensionDir) },
       { type: 'separator' },
       process.platform === 'darwin' ? { role: 'close' } : { role: 'quit' },

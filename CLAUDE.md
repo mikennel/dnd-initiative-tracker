@@ -23,5 +23,6 @@ model, DDB API notes and the ADRs.
 - `npm test`: Vitest (core and server)
 - `npm run typecheck`
 - `npm run build && npm start`: production build served by the server on the LAN
+- `npm run dev:desktop`: hot reload inside the Electron window (uses `npm run dev`'s server and data)
 - `npm run desktop` / `npm run dist`: run the Electron app / build the Windows installer (ADR 0006)
 - `npm run release -- patch` then `git push --follow-tags`: publish an update (ADR 0008)

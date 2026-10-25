@@ -21,6 +21,7 @@ firewall the first time. Allow it on private networks.
 
 ## Desktop app (ADR 0006)
 ```
+npm run dev:desktop    # hot reload inside the Electron window (Vite + server watch + app)
 npm run desktop    # builds the web app, bundles apps/desktop and opens it in Electron
 npm run dist       # Windows installer → apps/desktop/release/DnD Initiative Tracker Setup x.y.z.exe
 ```
