@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<defs><clipPath id="tile"><rect width="512" height="512" rx="112"/></clipPath></defs>
+<g clip-path="url(#tile)">
+<rect width="512" height="512" fill="#0D1117"/>
+<defs>
+<filter id="glowA" x="-50%" y="-50%" width="200%" height="200%">
+<feGaussianBlur stdDeviation="6" result="b"></feGaussianBlur>
+<feMerge><feMergeNode in="b"></feMergeNode><feMergeNode in="SourceGraphic"></feMergeNode></feMerge>
+</filter>
+<filter id="spillA" x="-50%" y="-50%" width="200%" height="200%">
+<feGaussianBlur stdDeviation="22"></feGaussianBlur>
+</filter>
+</defs>
+<path d="M 90 512 C 94 330 156 176 262 84 C 250 120 252 138 268 150 C 362 214 414 340 422 512 Z" fill="#2E2A4A"></path>
+<path d="M 262 84 C 250 120 252 138 268 150 C 300 172 330 204 352 244 C 326 196 296 166 274 150 C 260 140 258 116 262 84 Z" fill="#FFFFFF" opacity="0.10"></path>
+<path d="M 154 512 C 154 352 192 236 258 210 C 324 236 360 352 360 512 Z" fill="#06080B"></path>
+<path d="M 214 290 C 226 282 240 284 248 294 C 236 300 224 300 214 290 Z" fill="#3DFF8A" filter="url(#glowA)"></path>
+<path d="M 302 290 C 290 282 276 284 268 294 C 280 300 292 300 302 290 Z" fill="#3DFF8A" filter="url(#glowA)"></path>
+<ellipse cx="256" cy="372" rx="96" ry="22" fill="#3DFF8A" opacity="0.16" filter="url(#spillA)"></ellipse>
+<path d="M 164 376 L 98 394 L 98 512 L 164 512 Z" fill="#1E252E"></path>
+<path d="M 348 376 L 414 394 L 414 512 L 348 512 Z" fill="#1E252E"></path>
+<rect x="164" y="372" width="184" height="140" rx="6" fill="#2B333E"></rect>
+<rect x="164" y="372" width="184" height="6" rx="3" fill="#3DFF8A" opacity="0.55"></rect>
+<path d="M 98 394 L 164 376 M 348 376 L 414 394" stroke="#3DFF8A" stroke-width="4" stroke-linecap="round" opacity="0.3"></path>
+<g transform="translate(256 442)" fill="none" stroke="#3DFF8A" stroke-width="5" stroke-linejoin="round" filter="url(#glowA)">
+<path d="M 0 -34 L 29 -17 L 29 17 L 0 34 L -29 17 L -29 -17 Z"></path>
+<path d="M 0 -34 L -17 8 L 17 8 Z M -29 -17 L -17 8 M 29 -17 L 17 8 M -17 8 L 0 34 L 17 8 M -29 17 L -17 8 M 29 17 L 17 8"></path>
+</g>
+</g>
+</svg>

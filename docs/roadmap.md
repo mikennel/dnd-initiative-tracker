@@ -36,7 +36,7 @@
 - [x] Electron desktop app (Windows installer built locally; macOS via GitHub Actions), ADR 0006
 - [x] Chrome connector extension: one-click D&D Beyond login handoff, works with Google sign-in
 - [x] Firefox: read the login straight from the profile (no extension); extension also runs in Firefox (ADR 0007)
-- [ ] App icon
+- [x] App icon: "Hooded DM" (`apps/desktop/build/icon.svg`; also the web favicon)
 - [x] Auto-update from GitHub Releases (ADR 0008); first real release still to publish
 
 ## Later

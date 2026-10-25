@@ -34,6 +34,13 @@ The desktop app keeps its data in the OS app-data folder (**File → Open Data F
 in `apps/server/data/`. To bring over combats from the npm version, quit the app and copy
 `tracker.db` (and `secrets.json` if you like) into that folder.
 
+## App icon
+The source is `apps/desktop/build/icon.svg`: the "Hooded DM" concept from the icon design
+canvas, on a 1024 canvas with the macOS 824 px tile. After editing it, run
+`npm run icon -w @dnd/desktop` to re-render `build/icon.png` with Electron.
+electron-builder makes the `.ico` and `.icns` from that PNG. The web favicon is a full-bleed
+copy at `apps/web/public/favicon.svg`; update both together.
+
 ## Releasing an update (ADR 0008)
 ```
 npm run release -- patch     # or minor / major: bumps apps/desktop, commits, tags vX.Y.Z
