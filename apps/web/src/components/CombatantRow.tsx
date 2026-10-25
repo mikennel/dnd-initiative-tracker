@@ -34,6 +34,11 @@ export const CombatantRow = memo(function CombatantRow({ c, active, selected, ch
           <strong>{c.name}</strong>
           {c.hidden && <span className="chip" title="Hidden from the table view">hidden</span>}
           {c.concentration && <span className="chip conc" title="Concentrating">◎ {c.concentration}</span>}
+          {snap?.stats && (
+            <span className="passives" title="Passive Perception · Insight · Investigation">
+              👁 {snap.stats.passive.perception} · 💭 {snap.stats.passive.insight} · 🔍 {snap.stats.passive.investigation}
+            </span>
+          )}
           {snap && snap.deathSaves.fail + snap.deathSaves.success > 0 && hp?.current === 0 && (
             <span className="chip cond">
               Death saves ✓{snap.deathSaves.success} ✗{snap.deathSaves.fail}

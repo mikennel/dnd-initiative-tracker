@@ -37,6 +37,7 @@
 .crow-main { min-width: 0; }
 .crow-name { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .crow-name strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.passives { font-size: 0.8rem; color: var(--muted); white-space: nowrap; }
 .crow-chips { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 2px; }
 .crow-ac { text-align: center; font-weight: 700; font-size: 1.05rem; line-height: 1; }
 .crow-ac small { display: block; font-size: 0.65rem; color: var(--muted); font-weight: 400; }

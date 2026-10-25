@@ -53,7 +53,7 @@ View        = combine(CombatState, PcLive) // what the UI renders; playerView() 
 | Route | Purpose |
 |---|---|
 | `GET /api/status` | DDB connection status (`unconfigured`, `ok`, `auth-failed`, `unreachable`), the table's combat id, LAN URLs |
-| `PUT /api/settings/ddb` `{cobaltSession}` / `DELETE` | Store the cookie after verifying it mints a token, or forget it |
+| `PUT /api/settings/ddb` `{cobaltSession}` / `DELETE` | Store the cookie after verifying it mints a token, or forget it. **Loopback only**: the server listens on the LAN for `/table`, but other devices get 403 here |
 | `GET /api/ddb/campaigns`, `/campaigns/:id/characters` | Campaign list and roster |
 | `GET /api/ddb/encounters?skip&take`, `/encounters/:id` | DDB encounters (raw) |
 | `GET /api/ddb/monsters?ids=1,2`, `/monsters/search?q&homebrew=1` | Mapped `MonsterStatBlock`s. Cached in SQLite, and search falls back to the cache when offline |

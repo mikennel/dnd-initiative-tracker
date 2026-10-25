@@ -192,9 +192,9 @@ function PcStatsView({ stats }: { stats: NonNullable<PcSnapshot['stats']> }) {
       <div className="row" style={{ gap: 4, flexWrap: 'wrap' }}>
         <span className="chip">AC {stats.ac}</span>
         <span className="chip">Init {signed(stats.initBonus)}</span>
-        <span className="chip" title="Passive Perception / Insight / Investigation">
-          Passive {stats.passive.perception} / {stats.passive.insight} / {stats.passive.investigation}
-        </span>
+        <span className="chip">Passive Perception {stats.passive.perception}</span>
+        <span className="chip">Insight {stats.passive.insight}</span>
+        <span className="chip">Investigation {stats.passive.investigation}</span>
         {stats.spellcasting.map((s) => (
           <span key={s.sources.join()} className="chip" title={s.sources.join(', ')}>
             Spell DC {s.dc}
@@ -202,18 +202,23 @@ function PcStatsView({ stats }: { stats: NonNullable<PcSnapshot['stats']> }) {
           </span>
         ))}
       </div>
-      {Object.keys(stats.saves).length > 0 && (
-        <div className="row" style={{ gap: 4, flexWrap: 'wrap' }}>
-          <span className="muted">Saves</span>
-          {Object.entries(stats.saves).map(([k, v]) => (
-            <span key={k} className="chip">
-              {k.toUpperCase()} {signed(v)}
-            </span>
-          ))}
+      <details>
+        <summary className="muted">Saves, speed, senses and defenses</summary>
+        <div className="stack" style={{ gap: 4, marginTop: 4 }}>
+          {Object.keys(stats.saves).length > 0 && (
+            <div className="row" style={{ gap: 4, flexWrap: 'wrap' }}>
+              <span className="muted">Saves</span>
+              {Object.entries(stats.saves).map(([k, v]) => (
+                <span key={k} className="chip">
+                  {k.toUpperCase()} {signed(v)}
+                </span>
+              ))}
+            </div>
+          )}
+          <div className="muted">{[...stats.speeds, ...stats.senses].join(' · ')}</div>
+          {defenses.map(([label, list]) => list.length > 0 && <div key={label}>{label}: {list.join(', ')}</div>)}
         </div>
-      )}
-      <div className="muted">{[...stats.speeds, ...stats.senses].join(' · ')}</div>
-      {defenses.map(([label, list]) => list.length > 0 && <div key={label}>{label}: {list.join(', ')}</div>)}
+      </details>
     </>
   );
 }
