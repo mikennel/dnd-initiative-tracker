@@ -1,0 +1,14 @@
+.statblock { font-size: 0.92rem; }
+.statblock .sb-head h2 { font-family: var(--serif); color: var(--accent); font-size: 1.35rem; margin: 0; }
+.statblock .sb-head em { color: var(--muted); }
+.statblock .sb-props { margin: 8px 0; border-top: 2px solid var(--accent); padding-top: 6px; }
+.statblock .sb-props > div { display: flex; gap: 6px; }
+.statblock .sb-props dt { font-weight: 700; color: var(--accent); flex: none; }
+.statblock .sb-props dd { margin: 0; }
+.statblock .sb-abilities { width: 100%; text-align: center; border-top: 2px solid var(--accent); border-bottom: 2px solid var(--accent); margin: 6px 0; }
+.statblock .sb-abilities th { color: var(--accent); font-size: 0.8rem; }
+.statblock .sb-abilities td { font-size: 0.85rem; }
+.statblock .sb-section { font-family: var(--serif); color: var(--accent); border-bottom: 1px solid var(--accent); margin: 14px 0 6px; font-size: 1.05rem; }
+.statblock .sb-html p { margin: 0 0 6px; }
+.statblock [data-dicenotation] { color: var(--active); cursor: pointer; text-decoration: underline dotted; }
+.statblock [data-dicenotation]:hover { background: var(--active-bg); border-radius: 3px; }

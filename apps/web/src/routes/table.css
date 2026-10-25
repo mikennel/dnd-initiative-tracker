@@ -1,0 +1,26 @@
+.table-view { min-height: 100vh; background: var(--bg); padding: 20px clamp(16px, 4vw, 48px); font-size: clamp(16px, 2.2vw, 28px); }
+.table-empty { display: grid; place-content: center; text-align: center; color: var(--muted); }
+.table-empty h1 { font-size: 4em; margin: 0; }
+.table-view header { display: flex; align-items: center; gap: 16px; }
+.table-view header h1 { flex: 1; font-size: 1.4em; margin: 0; }
+.table-round { font-weight: 700; font-size: 1.2em; }
+.table-now { margin: 10px 0 16px; font-size: 1.1em; color: var(--muted); }
+.table-now strong { color: var(--active); }
+.table-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.4em; }
+.table-list li { display: flex; align-items: center; gap: 0.7em; padding: 0.5em 0.8em; background: var(--surface); border: 2px solid var(--border); border-radius: 14px; transition: all 0.3s; }
+.table-list li.active { border-color: var(--active); background: var(--active-bg); transform: scale(1.02); }
+.table-list li.defeated { opacity: 0.4; }
+.table-list li.k-effect { border-style: dashed; }
+.t-avatar { width: 2.2em; height: 2.2em; border-radius: 10px; object-fit: cover; flex: none; background: var(--surface-2); display: grid; place-items: center; font-weight: 700; color: var(--muted); }
+.t-main { flex: 1; min-width: 0; }
+.t-name { font-weight: 700; display: flex; gap: 0.4em; align-items: center; }
+.t-conds { display: flex; flex-wrap: wrap; gap: 0.3em; margin-top: 0.15em; }
+.t-chip { font-size: 0.65em; padding: 0.1em 0.6em; border-radius: 999px; background: color-mix(in srgb, var(--warn) 25%, var(--surface)); font-weight: 600; }
+.t-chip.conc { background: color-mix(in srgb, var(--temp) 25%, var(--surface)); }
+.t-hp { width: 7em; text-align: right; font-variant-numeric: tabular-nums; display: flex; flex-direction: column; gap: 0.2em; }
+.t-hp .hpbar { height: 0.35em; }
+.t-health { font-weight: 700; font-size: 0.8em; }
+.h-unhurt { color: var(--good); }
+.h-hurt { color: var(--warn); }
+.h-bloodied { color: var(--bad); }
+.h-down { color: var(--muted); }
