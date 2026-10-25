@@ -14,6 +14,8 @@ let offeredVersion: string | null = null;
 
 export function initUpdates() {
   if (!app.isPackaged) return;
+  // Local testing: point at a folder of build output served over HTTP (docs/dev-guide.md).
+  if (process.env.DND_UPDATE_URL) autoUpdater.setFeedURL({ provider: 'generic', url: process.env.DND_UPDATE_URL });
   autoUpdater.logger = null;
   autoUpdater.autoDownload = canInstall;
   autoUpdater.autoInstallOnAppQuit = true;

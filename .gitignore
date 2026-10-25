@@ -11,3 +11,4 @@ fixtures/private/
 .vscode/*
 !.vscode/extensions.json
 .idea/
+.update-test/

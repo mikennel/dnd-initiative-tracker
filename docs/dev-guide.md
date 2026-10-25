@@ -34,6 +34,21 @@ The desktop app keeps its data in the OS app-data folder (**File → Open Data F
 in `apps/server/data/`. To bring over combats from the npm version, quit the app and copy
 `tracker.db` (and `secrets.json` if you like) into that folder.
 
+## Testing the desktop app and updates locally
+- **Without installing:** `npm run desktop`, or run `apps/desktop/release/win-unpacked/DnD Initiative Tracker.exe`
+  after `npm run dist`. Add `DATA_DIR=<folder>` to keep test data away from your real combats.
+- **Installed:** run `apps/desktop/release/dnd-initiative-tracker-setup-x.y.z.exe`.
+- **Auto-update without GitHub:** the installed app reads `DND_UPDATE_URL` and uses it in place of GitHub
+  Releases. Build a newer version into a separate folder and serve it:
+  ```
+  cd apps/desktop
+  npx electron-builder --publish never -c.extraMetadata.version=0.1.1 -c.directories.output=../../.update-test
+  npx http-server ../../.update-test -p 8090
+  ```
+  Then start the installed (older) app from PowerShell:
+  `$env:DND_UPDATE_URL="http://localhost:8090"; & "$env:LOCALAPPDATA\Programs\DnD Initiative Tracker\DnD Initiative Tracker.exe"`.
+  It offers the update within a few seconds (or use Help → Check for Updates…). Delete `.update-test/` afterwards.
+
 ## App icon
 The source is `apps/desktop/build/icon.svg`: the "Hooded DM" concept from the icon design
 canvas, on a 1024 canvas with the macOS 824 px tile. After editing it, run
