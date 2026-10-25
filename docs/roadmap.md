@@ -20,13 +20,19 @@
 - [x] Add a monster, NPC or environment/lair effect mid-combat
 
 ## Phase 3: Live PC sync
-- [ ] Poll campaign PCs; show HP, temp HP, conditions, death saves and slots with staleness
+- [x] Poll campaign PCs; show HP, temp HP, conditions, death saves and slots with staleness (built, not yet verified against live DDB)
 
 ## Phase 4: Player view
 - [x] `/table` projection over its own WS channel; hidden and HP-descriptor rules
 
 ## Phase 5: Encounter builder
-- [ ] Campaign-aware party, monster search, 2014 and 2024 difficulty, local saved encounters
+- [x] Campaign-aware party, monster search, 2014 and 2024 difficulty, local saved encounters, run as a combat
+
+## Next up
+- [ ] Verify import, PC sync and monster search against live DDB once the cookie is connected
+- [ ] PC AC and initiative bonus from the character sheet (currently entered manually)
+- [ ] Investigate the game-log websocket so PC updates arrive instantly instead of by polling
+- [ ] Rest buttons (short/long rest resets resources)
 
 ## Later
 - Chrome extension "import this page"
