@@ -128,6 +128,26 @@
   animation: flair-ember linear infinite;
 }
 
+/* ---------- Back on their feet ---------- */
+.flair-revived {
+  background: radial-gradient(circle at center, rgb(255 214 120 / 0.5) 0%, rgb(120 70 0 / 0.35) 40%, rgb(0 0 0 / 0.7) 85%);
+  animation: flair-in 300ms ease-out both, flair-out 400ms ease-in calc(var(--flair-ms) - 400ms) forwards;
+}
+.flair-revived::before {
+  /* slow-turning rays of light behind the card */
+  content: '';
+  position: absolute;
+  width: 160vmax;
+  height: 160vmax;
+  background: repeating-conic-gradient(rgb(255 225 150 / 0.22) 0deg 6deg, transparent 6deg 18deg);
+  mask-image: radial-gradient(circle, #000 0%, transparent 55%);
+  animation: flair-burst 600ms cubic-bezier(0.2, 1.4, 0.4, 1) both, flair-spin 12s linear infinite;
+}
+.flair-revived .flair-card { animation: flair-rise-up 700ms cubic-bezier(0.2, 1.3, 0.4, 1) 150ms both; }
+.flair-revived .flair-avatar { border-color: #ffd36b; animation: flair-glow 1400ms ease-in-out 600ms infinite; box-shadow: 0 0 0 4px rgb(255 211 107 / 0.35), 0 0 50px #ffbf3c; }
+.flair-revived .flair-text { color: #fff4d6; text-shadow: 0 2px 0 #3a2400, 0 0 26px #ffb020, 0 0 6px #000; }
+.flair-revived .flair-embers span { background: radial-gradient(circle, #fff6d0 0%, #ffc53d 50%, transparent 70%); }
+
 /* ---------- Keyframes ---------- */
 @keyframes flair-in { from { opacity: 0; } }
 @keyframes flair-out { to { opacity: 0; } }
@@ -162,6 +182,10 @@
   77% { opacity: 0.7; }
   79% { opacity: 1; }
 }
+@keyframes flair-burst { from { scale: 0; opacity: 0; } }
+@keyframes flair-spin { to { rotate: 360deg; } }
+@keyframes flair-rise-up { from { transform: translateY(18vh) scale(0.8); opacity: 0; } }
+@keyframes flair-glow { 50% { box-shadow: 0 0 0 8px rgb(255 211 107 / 0.25), 0 0 80px #ffd36b; } }
 @keyframes flair-ember {
   0% { transform: translate(0, 0); opacity: 0; }
   15% { opacity: 0.9; }

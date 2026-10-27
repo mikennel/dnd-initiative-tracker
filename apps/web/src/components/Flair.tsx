@@ -10,13 +10,15 @@ import './flair.css';
 export interface FlairSubject {
   id: string;
   name: string;
+  /** Players go "down"; monsters and NPCs "fall". */
+  pc: boolean;
   avatarUrl?: string;
   /** 'Alive' = up, but the screen isn't allowed to know how hurt (monster health hidden on the table). */
   health?: HealthDescriptor | 'Alive';
   dying?: { success: number; fail: number };
 }
 
-type FlairKind = 'bloodied' | 'down' | 'deathsave';
+type FlairKind = 'bloodied' | 'down' | 'deathsave' | 'revived';
 
 interface FlairEvent {
   key: number;
@@ -24,7 +26,10 @@ interface FlairEvent {
   who: FlairSubject[];
 }
 
-const DURATION: Record<FlairKind, number> = { bloodied: 2600, down: 3000, deathsave: 4000 };
+const DURATION: Record<FlairKind, number> = { bloodied: 2600, down: 3000, deathsave: 4000, revived: 3000 };
+/** Back above 0 HP this soon after dropping is a typo being fixed (or an undo), not a heal. */
+const CORRECTION_MS = 6000;
+const RANK: Record<NonNullable<FlairSubject['health']>, number> = { Down: 0, Bloodied: 1, Hurt: 2, Alive: 2, Unhurt: 3 };
 /** Older moments are dropped rather than replayed long after the fact. */
 const MAX_QUEUE = 3;
 
@@ -36,6 +41,7 @@ let nextKey = 1;
  */
 export function Flair({ subjects, activeId, live, enabled, scope }: { subjects: FlairSubject[]; activeId: string | null; live: boolean; enabled: boolean; scope: string }) {
   const prev = useRef<{ scope: string; health: Map<string, FlairSubject['health']>; activeId: string | null } | null>(null);
+  const downAt = useRef(new Map<string, number>());
   const [queue, setQueue] = useState<FlairEvent[]>([]);
 
   useEffect(() => {
@@ -47,15 +53,33 @@ export function Flair({ subjects, activeId, live, enabled, scope }: { subjects: 
 
     const down: FlairSubject[] = [];
     const bloodied: FlairSubject[] = [];
+    const revived: FlairSubject[] = [];
+    const better = new Set<string>();
+    const now = Date.now();
     for (const s of subjects) {
       const was = before.health.get(s.id);
       if (was === undefined || s.health === undefined || was === s.health) continue;
-      if (s.health === 'Down') down.push(s);
-      else if (s.health === 'Bloodied' && (was === 'Unhurt' || was === 'Hurt')) bloodied.push(s);
+      if (RANK[s.health] > RANK[was]) better.add(s.id);
+      if (s.health === 'Down') {
+        down.push(s);
+        downAt.current.set(s.id, now);
+      } else if (s.health === 'Bloodied' && (was === 'Unhurt' || was === 'Hurt')) bloodied.push(s);
+      if (was === 'Down' && s.health !== 'Down' && now - (downAt.current.get(s.id) ?? 0) > CORRECTION_MS) revived.push(s);
+    }
+    // Whoever got better no longer deserves a pending bloodied/down card (undo, fixed typo).
+    if (better.size) {
+      setQueue((q) =>
+        q
+          .map((e) => (e.kind === 'bloodied' || e.kind === 'down' ? { ...e, who: e.who.filter((s) => !better.has(s.id)) } : e))
+          .filter((e) => e.who.length > 0),
+      );
     }
     const events: FlairEvent[] = [];
-    if (down.length) events.push({ key: nextKey++, kind: 'down', who: down });
+    const fallen = down.filter((s) => !s.pc);
+    if (down.length > fallen.length) events.push({ key: nextKey++, kind: 'down', who: down.filter((s) => s.pc) });
+    if (fallen.length) events.push({ key: nextKey++, kind: 'down', who: fallen });
     if (bloodied.length) events.push({ key: nextKey++, kind: 'bloodied', who: bloodied });
+    if (revived.length) events.push({ key: nextKey++, kind: 'revived', who: revived });
     if (activeId && activeId !== before.activeId) {
       const active = subjects.find((s) => s.id === activeId);
       if (active?.dying) events.push({ key: nextKey++, kind: 'deathsave', who: [active] });
@@ -80,6 +104,7 @@ export function Flair({ subjects, activeId, live, enabled, scope }: { subjects: 
     <div className={`flair flair-${current.kind}`} key={current.key} style={{ '--flair-ms': `${DURATION[current.kind]}ms` } as CSSProperties} aria-live="polite">
       {current.kind === 'bloodied' && <Splatter seed={current.key} />}
       {current.kind === 'deathsave' && <Embers seed={current.key} />}
+      {current.kind === 'revived' && <Embers seed={current.key} />}
       <div className="flair-card" onClick={dismiss} title="Click to dismiss">
         {current.kind === 'down' && <Skull />}
         <div className="flair-avatars">
@@ -100,7 +125,8 @@ function headline(e: FlairEvent): string {
   const list = names.length === 1 ? names[0] : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
   const verb = names.length === 1 ? 'is' : 'are';
   if (e.kind === 'bloodied') return `${list} ${verb} bloodied!`;
-  if (e.kind === 'down') return `${list} ${verb} down!`;
+  if (e.kind === 'down') return e.who[0].pc ? `${list} ${verb} down!` : `${list} ${names.length === 1 ? 'falls' : 'fall'}!`;
+  if (e.kind === 'revived') return `${list} ${verb} back on their feet!`;
   return `${list} is making a death saving throw!`;
 }
 

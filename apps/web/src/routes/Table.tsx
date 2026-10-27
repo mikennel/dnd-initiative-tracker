@@ -58,6 +58,7 @@ export function Table() {
         .map((c): FlairSubject => ({
           id: c.id,
           name: c.name,
+          pc: c.kind === 'pc',
           avatarUrl: c.avatarUrl || undefined,
           // Monsters with health hidden can still be seen falling (their row already dims).
           health: c.hp ? healthDescriptor(c.hp) : (c.health ?? (c.defeated ? 'Down' : 'Alive')),

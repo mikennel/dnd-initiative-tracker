@@ -44,7 +44,7 @@ function Tracker() {
         .map((c): FlairSubject => {
           const hp = effectiveHp(c, pcLive);
           const snap = c.source?.ddbCharacterId !== undefined ? pcLive[c.source.ddbCharacterId] : undefined;
-          return { id: c.id, name: c.name, avatarUrl: c.avatarUrl || undefined, health: hp ? healthDescriptor(hp) : undefined, dying: dyingState(c, hp, snap) };
+          return { id: c.id, name: c.name, pc: c.kind === 'pc', avatarUrl: c.avatarUrl || undefined, health: hp ? healthDescriptor(hp) : undefined, dying: dyingState(c, hp, snap) };
         }),
     [order, pcLive],
   );
