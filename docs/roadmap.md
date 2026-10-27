@@ -47,6 +47,10 @@
 - [x] Lineup phase between setup and combat: players see only their own order on the table, Alert swaps (feat detected from the sheet), then Start combat reveals enemies
 - [x] Dropped the "DDB · Ns ago" sync label from tracker rows (still in the PC panel)
 
+## Flair (2026-10-27)
+- [x] Health-milestone effects on the DM and table screens: blood spatter for bloodied, cracking skull for down, a doom vignette when a dying PC's turn comes up (Effects switch per combat)
+- [x] Monsters and NPCs "fall" instead of going down; a golden "back on their feet!" when healed from 0 (ignored within 6 s of dropping, so undo and typos stay quiet)
+
 ## Later
 - Chrome extension "import this page"
 - Session log export

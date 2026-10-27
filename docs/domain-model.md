@@ -77,6 +77,23 @@ Kinds: `concentration`, `recharge`, `save`, `effect`.
 
 ## Player view
 `selectors.ts → playerView(state, pcLive)`. See [ADR 0005](decisions/0005-player-view-projection.md).
+It also carries `effects` (the DM's switch) and, for PCs at 0 HP who aren't stable or dead,
+`dying: { success, fail }` (`dyingState`; local PCs report 0/0).
+
+## Health-milestone effects
+`apps/web/src/components/Flair.tsx`, shown on both the DM screen and `/table`. They are not
+events: each screen diffs successive snapshots of what it already shows and fires on
+- **Bloodied**: Unhurt/Hurt → Bloodied (blood spatter).
+- **Down / falls**: anything → 0 HP (cracking skull). PCs are "down", monsters and NPCs
+  "fall". Simultaneous drops share one card per side.
+- **Back on their feet**: 0 HP → above 0 (golden burst).
+- **Death saving throw**: the turn passes to a dying PC.
+
+Only during an active combat, never on first load, and the table only knows what its
+projection says (monsters with health hidden can still be seen to drop, as their row dims).
+Anyone whose health improves is dropped from pending bloodied/down cards, and climbing back
+above 0 within 6 s of dropping counts as a correction (typo or undo), not a heal.
+`settings.effects` turns them off; older combats without the field count as on.
 
 ## PcSnapshot (polled, not event-sourced)
 Live PC state from DDB (ADR 0003), built by `mapCharacterSummary` (scds) and `mapCharacter`
