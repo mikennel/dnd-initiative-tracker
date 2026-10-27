@@ -1,4 +1,4 @@
-import { combatPhase, effectiveInitBonus, rollD20, turnOrder, type CombatEventBody, type Combatant, type PcSnapshot } from '@dnd/core';
+import { combatPhase, dyingState, effectiveHp, effectiveInitBonus, healthDescriptor, rollD20, turnOrder, type CombatEventBody, type Combatant, type PcSnapshot } from '@dnd/core';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { AddCombatant } from '../components/AddCombatant.tsx';
@@ -6,6 +6,7 @@ import { ToastProvider } from '../components/bits.tsx';
 import { CombatantRow, HpInput } from '../components/CombatantRow.tsx';
 import { DdbStatusBanner } from '../components/DdbStatusBanner.tsx';
 import { DetailPanel } from '../components/DetailPanel.tsx';
+import { Flair, type FlairSubject } from '../components/Flair.tsx';
 import { HP_SCALES, scaleHpEvents } from '../lib/actions.ts';
 import { Prompts } from '../components/Prompts.tsx';
 import { useCombat, useNow, useStatus } from '../lib/hooks.ts';
@@ -36,6 +37,17 @@ function Tracker() {
   const focus = focusId ? state.combatants[focusId] : undefined;
 
   const phase = combatPhase(state);
+  const flairSubjects = useMemo(
+    () =>
+      order
+        .filter((c) => c.kind !== 'effect')
+        .map((c): FlairSubject => {
+          const hp = effectiveHp(c, pcLive);
+          const snap = c.source?.ddbCharacterId !== undefined ? pcLive[c.source.ddbCharacterId] : undefined;
+          return { id: c.id, name: c.name, avatarUrl: c.avatarUrl || undefined, health: hp ? healthDescriptor(hp) : undefined, dying: dyingState(c, hp, snap) };
+        }),
+    [order, pcLive],
+  );
   const next = useCallback(() => dispatch({ type: 'turn/next' }), [dispatch]);
   /** The big button: setup → show the players their order → start combat → next turn. */
   const advance = useCallback(
@@ -192,6 +204,10 @@ function Tracker() {
           <input type="checkbox" checked={state.settings.showMonsterHealth} onChange={(e) => dispatch({ type: 'combat/settings', patch: { showMonsterHealth: e.target.checked } })} />
           Monster health on table
         </label>
+        <label className="row muted small-label" title="Bloodied, down and death-save animations on this screen and the table view">
+          <input type="checkbox" checked={state.settings.effects !== false} onChange={(e) => dispatch({ type: 'combat/settings', patch: { effects: e.target.checked } })} />
+          Effects
+        </label>
         {state.started && (
           <button className="ghost" onClick={() => dispatch({ type: 'combat/ended' })}>
             End combat
@@ -300,6 +316,7 @@ function Tracker() {
         </aside>
       </div>
 
+      <Flair subjects={flairSubjects} activeId={state.activeId} live={phase === 'active'} enabled={state.settings.effects !== false} scope={combatId} />
       <AddCombatant open={adding} onClose={() => setAdding(false)} state={state} dispatch={dispatch} />
     </div>
   );

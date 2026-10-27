@@ -11,6 +11,17 @@ export function healthDescriptor(hp: Pick<HitPoints, 'current' | 'max'>): Health
   return 'Hurt';
 }
 
+/**
+ * A PC at 0 HP who is neither stable nor dead rolls death saves on their turn. Counts come from
+ * the DDB sheet when linked; local PCs report 0/0.
+ */
+export function dyingState(c: Combatant, hp: HitPoints | null, snap: PcSnapshot | undefined): { success: number; fail: number } | undefined {
+  if (c.kind !== 'pc' || !hp || hp.current > 0) return undefined;
+  const ds = snap?.deathSaves;
+  if (ds && (ds.stable || ds.success >= 3 || ds.fail >= 3)) return undefined;
+  return { success: ds?.success ?? 0, fail: ds?.fail ?? 0 };
+}
+
 /** Effective HP for display: DDB-linked PCs use the polled snapshot (ADR 0003). */
 export function effectiveHp(c: Combatant, pcLive: Record<number, PcSnapshot | undefined>): HitPoints | null {
   const id = c.source?.ddbCharacterId;
@@ -44,6 +55,8 @@ export interface PlayerViewCombatant {
   conditions: string[];
   concentrating: boolean;
   defeated: boolean;
+  /** PCs at 0 HP making death saves (drives the table's death-save effect). */
+  dying?: { success: number; fail: number };
   /** Only during the lineup, so players can decide on Alert swaps. */
   initiative?: number | null;
 }
@@ -60,6 +73,8 @@ export interface PlayerView {
   started: boolean;
   phase: CombatPhase;
   round: number;
+  /** The DM's "Effects" switch: health-milestone animations on the table. */
+  effects: boolean;
   combatants: PlayerViewCombatant[];
 }
 
@@ -92,8 +107,10 @@ export function playerView(state: CombatState, pcLive: Record<number, PcSnapshot
       };
       if (phase === 'lineup') v.initiative = c.initiative;
       if (c.kind === 'pc' && hp) v.hp = hp;
+      const dying = dyingState(c, hp, snap);
+      if (dying) v.dying = dying;
       else if ((c.kind === 'monster' || c.kind === 'npc') && hp && state.settings.showMonsterHealth) v.health = healthDescriptor(hp);
       return v;
     });
-  return { name: state.name, started: state.started, phase, round: state.round, combatants };
+  return { name: state.name, started: state.started, phase, round: state.round, effects: state.settings.effects !== false, combatants };
 }

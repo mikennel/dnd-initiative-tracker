@@ -9,7 +9,7 @@ CombatState {
   combatants: Record<id, Combatant>
   started, round, activeId          // whose turn it is (by id, not index, so inserts are safe)
   prompts: CombatPrompt[]           // things the DM should resolve (saves, recharge rolls...)
-  settings { showMonsterHealth, skipDefeated, rules: '2014'|'2024' }
+  settings { showMonsterHealth, effects, skipDefeated, rules: '2014'|'2024' }
   statBlocks: Record<key, MonsterStatBlock>   // key = DDB monster id
   log: { round, text }[]            // human-readable history (last 300)
 }

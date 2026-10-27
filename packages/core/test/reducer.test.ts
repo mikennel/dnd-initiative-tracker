@@ -240,6 +240,22 @@ describe('player view', () => {
     expect(view.combatants[1]).not.toHaveProperty('hp');
     expect(JSON.stringify(view)).not.toContain('secret');
   });
+
+  it('marks PCs at 0 HP as dying until stable', () => {
+    const snap = (deathSaves: { fail: number; success: number; stable: boolean }) => ({
+      7: { characterId: 7, name: 'PC', level: 3, hp: { current: 0, max: 30, temp: 0 }, conditions: [], deathSaves, spellSlots: [], pactSlots: [], limitedUses: [], avatarUrl: null, fetchedAt: 0 },
+    });
+    const { state } = run(
+      add('pc', { initiative: 14, kind: 'pc', hp: null, source: { ddbCharacterId: 7 } }),
+      add('local', { initiative: 12, kind: 'pc', hp: { current: 0, max: 20, temp: 0 } }),
+      add('m', { initiative: 10, hp: { current: 0, max: 20, temp: 0 } }),
+      { type: 'combat/started' },
+    );
+    const view = playerView(state, snap({ fail: 1, success: 2, stable: false }));
+    expect(view.effects).toBe(true);
+    expect(view.combatants.map((c) => c.dying)).toEqual([{ success: 2, fail: 1 }, { success: 0, fail: 0 }, undefined]);
+    expect(playerView(state, snap({ fail: 0, success: 3, stable: true })).combatants[0]).not.toHaveProperty('dying');
+  });
 });
 
 describe('lineup and Alert swaps', () => {

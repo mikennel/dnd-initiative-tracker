@@ -1,0 +1,174 @@
+/* Health-milestone overlays (Flair.tsx). Click-through except the card itself. */
+.flair {
+  --blood: #8a0b0b;
+  --blood-hi: #c4161c;
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  pointer-events: none;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  animation: flair-out 400ms ease-in calc(var(--flair-ms) - 400ms) forwards;
+}
+
+.flair-card {
+  pointer-events: auto;
+  cursor: pointer;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  max-width: min(90vw, 900px);
+  padding: 24px 40px;
+  text-align: center;
+  color: #fff;
+}
+
+.flair-text {
+  font-family: var(--serif);
+  font-weight: 700;
+  font-size: clamp(28px, 5.5vw, 72px);
+  line-height: 1.1;
+  letter-spacing: 0.02em;
+  text-shadow: 0 2px 0 #000, 0 0 24px rgb(0 0 0 / 0.9), 0 0 4px #000;
+}
+
+.flair-avatars { display: flex; gap: 12px; justify-content: center; }
+.flair-avatar {
+  width: clamp(80px, 14vmin, 160px);
+  height: clamp(80px, 14vmin, 160px);
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid #fff;
+  background: #2a2a2a;
+  display: grid;
+  place-items: center;
+  font-family: var(--serif);
+  font-weight: 700;
+  font-size: clamp(36px, 7vmin, 72px);
+  color: #ddd;
+  box-shadow: 0 8px 30px rgb(0 0 0 / 0.6);
+}
+.flair-more { font-size: clamp(24px, 4vmin, 40px); }
+
+/* ---------- Bloodied ---------- */
+.flair-bloodied { background: radial-gradient(ellipse at center, transparent 35%, rgb(90 0 0 / 0.55) 100%); }
+.flair-bloodied::before {
+  /* the hit: a red flash */
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--blood-hi);
+  animation: flair-flash 450ms ease-out forwards;
+}
+.flair-bloodied .flair-card { animation: flair-slam 500ms cubic-bezier(0.2, 1.6, 0.4, 1) both, flair-shake 380ms 120ms linear; }
+.flair-bloodied .flair-avatar { border-color: var(--blood-hi); box-shadow: 0 0 0 4px rgb(0 0 0 / 0.4), 0 0 40px var(--blood-hi); }
+.flair-bloodied .flair-text { color: #ffdcdc; text-shadow: 0 2px 0 #000, 0 0 24px var(--blood), 0 0 6px #000; }
+
+.flair-splatter { position: absolute; inset: 0; }
+.flair-splatter .splat {
+  position: absolute;
+  translate: -50% -50%;
+  fill: var(--blood);
+  overflow: visible;
+  opacity: 0.92;
+  filter: drop-shadow(0 1px 0 rgb(255 255 255 / 0.15));
+  animation: flair-splat 260ms cubic-bezier(0.1, 1.5, 0.4, 1) both;
+}
+.flair-splatter .drip { transform-box: fill-box; transform-origin: top; animation: flair-drip 1800ms ease-in both; }
+
+/* ---------- Down ---------- */
+.flair-down { background: rgb(0 0 0 / 0.72); animation: flair-in 250ms ease-out both, flair-out 400ms ease-in calc(var(--flair-ms) - 400ms) forwards; }
+.flair-down .flair-card { animation: flair-rise 400ms ease-out 250ms both; }
+.flair-down .flair-avatar { filter: grayscale(1) contrast(1.1); border-color: #999; animation: flair-desaturate 900ms ease-out both; }
+.flair-down .flair-text { color: #e8e2d6; }
+
+.flair-skull { width: clamp(120px, 22vmin, 220px); height: auto; overflow: visible; animation: flair-drop 450ms cubic-bezier(0.3, 1.4, 0.5, 1) both; }
+.flair-skull .bone { fill: #ece6d6; stroke: #2a241c; stroke-width: 2.5; }
+.flair-skull .socket { fill: #140f0b; }
+.flair-skull .teeth { fill: none; stroke: #2a241c; stroke-width: 2; }
+.flair-skull .crack { fill: none; stroke: #0b0806; stroke-width: 3; stroke-linejoin: round; stroke-dasharray: 1; stroke-dashoffset: 1; animation: flair-crack 350ms ease-in 650ms forwards; }
+.flair-skull .crack.thin { stroke-width: 1.6; animation-delay: 850ms; }
+.flair-skull .half { transform-box: fill-box; }
+.flair-skull .half.left { transform-origin: bottom left; animation: flair-split-left 600ms cubic-bezier(0.5, 0, 0.8, 0.4) 1150ms forwards; }
+.flair-skull .half.right { transform-origin: bottom right; animation: flair-split-right 600ms cubic-bezier(0.5, 0, 0.8, 0.4) 1150ms forwards; }
+.flair-down .flair-skull { animation: flair-drop 450ms cubic-bezier(0.3, 1.4, 0.5, 1) both, flair-shake 220ms 650ms linear; }
+
+/* ---------- Death saving throw ---------- */
+.flair-deathsave {
+  background: radial-gradient(ellipse at center, rgb(10 0 0 / 0.55) 0%, rgb(0 0 0 / 0.92) 75%);
+  animation: flair-in 700ms ease-out both, flair-out 500ms ease-in calc(var(--flair-ms) - 500ms) forwards;
+}
+.flair-deathsave::before {
+  /* a slow heartbeat around the edges */
+  content: '';
+  position: absolute;
+  inset: 0;
+  box-shadow: inset 0 0 18vmin rgb(160 0 0 / 0.9);
+  animation: flair-heartbeat 1100ms ease-in-out infinite;
+}
+.flair-deathsave .flair-card { animation: flair-fade-up 900ms ease-out 300ms both; }
+.flair-deathsave .flair-avatar { border-color: #5a0000; filter: grayscale(0.6) brightness(0.85); animation: flair-flicker 2400ms steps(1) infinite; box-shadow: 0 0 60px rgb(160 0 0 / 0.8); }
+.flair-deathsave .flair-text { color: #f1d5d5; font-size: clamp(24px, 4.5vw, 60px); text-shadow: 0 0 30px #a00000, 0 2px 0 #000; }
+.flair-pips { display: flex; gap: 28px; }
+.flair-pips > span { display: flex; gap: 8px; }
+.flair-pips .pip { width: 20px; height: 20px; border-radius: 50%; border: 2px solid #777; }
+.flair-pips .pip.ok.on { background: #5ec26a; border-color: #5ec26a; }
+.flair-pips .pip.fail.on { background: #d62828; border-color: #d62828; }
+
+.flair-embers { position: absolute; inset: 0; }
+.flair-embers span {
+  position: absolute;
+  bottom: -10px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #ffb36b 0%, #e2401c 55%, transparent 70%);
+  opacity: 0;
+  animation: flair-ember linear infinite;
+}
+
+/* ---------- Keyframes ---------- */
+@keyframes flair-in { from { opacity: 0; } }
+@keyframes flair-out { to { opacity: 0; } }
+@keyframes flair-flash { from { opacity: 0.5; } to { opacity: 0; } }
+@keyframes flair-slam { from { transform: scale(2.4); opacity: 0; } }
+@keyframes flair-shake {
+  0%, 100% { translate: 0 0; }
+  20% { translate: -10px 4px; }
+  40% { translate: 9px -5px; }
+  60% { translate: -6px 3px; }
+  80% { translate: 4px -2px; }
+}
+@keyframes flair-splat { from { scale: 0.15; opacity: 0; } }
+@keyframes flair-drip { from { transform: scaleY(0.1); } }
+@keyframes flair-rise { from { transform: translateY(30px); opacity: 0; } }
+@keyframes flair-drop { from { transform: translateY(-60vh) rotate(-20deg); } }
+@keyframes flair-desaturate { from { filter: none; border-color: #fff; } }
+@keyframes flair-crack { to { stroke-dashoffset: 0; } }
+@keyframes flair-split-left { to { transform: translate(-10px, 6px) rotate(-12deg); } }
+@keyframes flair-split-right { to { transform: translate(10px, 6px) rotate(12deg); } }
+@keyframes flair-heartbeat {
+  0%, 100% { opacity: 0.45; }
+  12% { opacity: 1; }
+  24% { opacity: 0.6; }
+  36% { opacity: 0.95; }
+}
+@keyframes flair-fade-up { from { transform: translateY(20px) scale(0.96); opacity: 0; filter: blur(6px); } }
+@keyframes flair-flicker {
+  0%, 100% { opacity: 1; }
+  41% { opacity: 0.55; }
+  43% { opacity: 1; }
+  77% { opacity: 0.7; }
+  79% { opacity: 1; }
+}
+@keyframes flair-ember {
+  0% { transform: translate(0, 0); opacity: 0; }
+  15% { opacity: 0.9; }
+  100% { transform: translate(var(--drift), -85vh); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flair *, .flair::before { animation-duration: 1ms !important; animation-iteration-count: 1 !important; }
+  .flair-embers { display: none; }
+}

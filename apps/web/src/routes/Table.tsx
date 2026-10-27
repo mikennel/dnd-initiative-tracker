@@ -1,7 +1,8 @@
-import type { PlayerView } from '@dnd/core';
-import { useEffect, useRef, useState } from 'react';
+import { healthDescriptor, type PlayerView } from '@dnd/core';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { HpBar } from '../components/bits.tsx';
+import { Flair, type FlairSubject } from '../components/Flair.tsx';
 import './table.css';
 
 /**
@@ -49,6 +50,21 @@ export function Table() {
   useEffect(() => {
     activeRef.current?.scrollIntoView({ block: 'center', behavior: 'smooth' });
   }, [view?.combatants.find((c) => c.isActive)?.id]);
+
+  const flairSubjects = useMemo(
+    () =>
+      (view?.combatants ?? [])
+        .filter((c) => c.kind !== 'effect')
+        .map((c): FlairSubject => ({
+          id: c.id,
+          name: c.name,
+          avatarUrl: c.avatarUrl || undefined,
+          // Monsters with health hidden can still be seen falling (their row already dims).
+          health: c.hp ? healthDescriptor(c.hp) : (c.health ?? (c.defeated ? 'Down' : 'Alive')),
+          dying: c.dying,
+        })),
+    [view],
+  );
 
   // Keep the screen awake on tablets/TVs where supported.
   useEffect(() => {
@@ -118,6 +134,7 @@ export function Table() {
           </li>
         ))}
       </ol>
+      <Flair subjects={flairSubjects} activeId={active?.id ?? null} live={view.phase === 'active'} enabled={view.effects !== false} scope={combatId ?? 'current'} />
     </div>
   );
 }

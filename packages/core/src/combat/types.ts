@@ -80,6 +80,8 @@ export interface CombatPrompt {
 
 export interface CombatSettings {
   showMonsterHealth: boolean;
+  /** Bloodied / down / death-save animations on the DM and table screens. Older combats lack it: treat as on. */
+  effects: boolean;
   skipDefeated: boolean;
   rules: '2014' | '2024';
 }
@@ -110,6 +112,7 @@ export interface CombatState {
 
 export const DEFAULT_SETTINGS: CombatSettings = {
   showMonsterHealth: true,
+  effects: true,
   skipDefeated: true,
   rules: '2024',
 };
