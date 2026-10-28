@@ -1,7 +1,7 @@
 {
   "name": "@dnd/desktop",
   "productName": "DnD Initiative Tracker",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "Encounter builder and initiative tracker for D&D Beyond campaigns",
   "author": "Michael",
